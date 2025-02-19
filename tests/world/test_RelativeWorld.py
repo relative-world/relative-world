@@ -49,7 +49,7 @@ class TestRelativeWorld(unittest.TestCase):
         """
         self.relative_world.time_step = timedelta(0)
         self.relative_world.previous_iterations = 1
-        self.relative_world.update()
+        list(self.relative_world.update())
         expected_time = self.simulation_start_time
         self.assertEqual(
             self.relative_world.simulation_start_time
@@ -62,8 +62,7 @@ class TestRelativeWorld(unittest.TestCase):
         Test that updating with a negative time step correctly adjusts the simulation time backward.
         """
         self.relative_world.time_step = timedelta(minutes=-15)
-        self.relative_world.previous_iterations = 1
-        self.relative_world.update()
+        list(self.relative_world.update())
         expected_time = self.simulation_start_time + timedelta(minutes=-15)
         self.assertEqual(
             self.relative_world.simulation_start_time
