@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "relative-world"
+version = "0.1.0"
+description = ""
+authors = ["Tyler Evans <tyler@poorlythoughtout.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.10.6"
+freezegun = "^1.5.1"
+black = "^25.1.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
