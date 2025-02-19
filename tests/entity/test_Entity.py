@@ -1,6 +1,7 @@
 import unittest
 from relative_world.entity import Entity
-from relative_world.events import BoundEvent
+from relative_world.bound_event import BoundEvent
+from relative_world.event import Event, EventType  # Assuming Event is defined in this module
 
 
 class ExampleEntity(Entity):
@@ -21,7 +22,8 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleCancellingEntity()
         parent.children = [child1, child2]
 
-        event = BoundEvent(source_entity=parent)
+        event = BoundEvent(source_entity=parent,
+                           event=Event(name="test_event", type=EventType.SAY_ALOUD, context={}))
         result = parent.handle_event(event)
         self.assertFalse(
             result, "Event should not propagate because one child cancels it"
@@ -33,10 +35,10 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleEntity()
         parent.children = [child1, child2]
 
-        event = BoundEvent(source_entity=parent)
+        event = BoundEvent(source_entity=parent,
+                           event=Event(name="test_event", type=EventType.SAY_ALOUD, context={}))
         result = parent.handle_event(event)
         self.assertTrue(result, "Event should propagate because all children allow it")
-
     def test_update(self):
         parent = Entity()
         child = ExampleEntity()
@@ -52,7 +54,7 @@ class TestEntity(unittest.TestCase):
     def test_update_yields_events(self):
         class EventGeneratingEntity(Entity):
             def update(self):
-                yield BoundEvent(source_entity=self)
+                yield BoundEvent(source_entity=self, event=Event(name="generated_event", type=EventType.SAY_ALOUD, context={}))
 
         parent = Entity()
         child = EventGeneratingEntity()

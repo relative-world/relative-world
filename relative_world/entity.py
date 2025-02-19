@@ -3,7 +3,6 @@ from typing import Self
 
 from pydantic import BaseModel
 
-from relative_world.events import BoundEvent
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class Entity(BaseModel):
 
     children: list[Self] = []
 
-    def handle_event(self, event: BoundEvent) -> bool:
+    def handle_event(self, event: 'BoundEvent') -> bool:
         """
         Handles an event by applying it to the entity.
 
@@ -45,5 +44,3 @@ class Entity(BaseModel):
                     yield event
         yield from []
 
-
-BoundEvent.model_rebuild()
