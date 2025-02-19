@@ -1,4 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def utcnow():
+    return datetime.now(timezone.utc)
 
 
 def time_as_relative_string(start: datetime, end: datetime) -> str:

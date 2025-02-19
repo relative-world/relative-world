@@ -60,5 +60,5 @@ class ScriptedActor(Actor):
             next_key_point = self.script.pop(0)
             action = self.get_action(next_key_point.action)
             if action:
-                yield from action(*next_key_point.args, **next_key_point.kwargs)
+                yield from action(*next_key_point.args, **next_key_point.kwargs) or []
         yield from super().update()

@@ -41,7 +41,7 @@ class TestRelativeWorld(unittest.TestCase):
         """
         self.relative_world.simulation_start_time = None
         with self.assertRaises(TypeError):
-            self.relative_world.update()
+            next(self.relative_world.update())
 
     def test_update_with_zero_time_step(self):
         """

@@ -1,8 +1,10 @@
 from datetime import timedelta, datetime
+from typing import Iterator
 
 from freezegun import freeze_time
 
 from relative_world.entity import Entity
+from relative_world.event import Event
 
 
 class RelativeWorld(Entity):
@@ -19,7 +21,7 @@ class RelativeWorld(Entity):
     time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
 
-    def update(self):
+    def update(self) -> Iterator[tuple[Entity, Event]]:
         """
         Advances the simulation by one time step and updates the state of the world.
         """
@@ -27,4 +29,5 @@ class RelativeWorld(Entity):
             self.simulation_start_time + self.time_step * self.previous_iterations
         )
         with freeze_time(current_time):
-            super().update()
+            yield from super().update()
+        self.previous_iterations += 1
