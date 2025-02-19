@@ -40,5 +40,19 @@ class TestEntity(unittest.TestCase):
         events = list(parent.update())
         self.assertEqual(events, [], "Update should yield no events because ExampleEntity does not generate events")
 
+    def test_update_yields_events(self):
+        class EventGeneratingEntity(Entity):
+            def update(self):
+                yield BoundEvent(source_entity=self)
+
+        parent = Entity()
+        child = EventGeneratingEntity()
+        parent.children = [child]
+
+        events = list(parent.update())
+        self.assertEqual(len(events), 1, "Update should yield one event")
+        self.assertIsInstance(events[0], BoundEvent, "Yielded event should be an instance of BoundEvent")
+        self.assertEqual(events[0].source_entity, child, "The source entity of the yielded event should be the child entity")
+
 if __name__ == '__main__':
     unittest.main()

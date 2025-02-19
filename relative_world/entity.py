@@ -43,6 +43,7 @@ class Entity(BaseModel):
             for event in child.update():
                 if self.handle_event(event):
                     yield event
+        yield from []
 
 
 BoundEvent.model_rebuild()

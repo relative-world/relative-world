@@ -10,7 +10,6 @@ def time_as_relative_string(start: datetime, end: datetime) -> str:
         (honestly... idk, trying things is about learning things)
     """
     delta = end - start
-    print(start, end, delta)
     if start > end:
         delta = -delta
         if delta < timedelta(seconds=60):

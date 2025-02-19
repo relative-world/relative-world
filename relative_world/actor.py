@@ -9,11 +9,17 @@ class Actor(Entity):
     Actor is a subclass of Entity that represents an actor in the simulation.
     """
 
-    def tools(self):
+    def get_action(self, action: str):
         """
-        Placeholder method for tools used by the actor.
+        Retrieves the action method corresponding to the given action name.
+
+        Args:
+            action (str): The name of the action to retrieve.
+
+        Raises:
+            NotImplementedError: This method should be implemented by subclasses.
         """
-        pass
+        raise NotImplementedError
 
 
 class ScriptKeyPoint(Entity):
@@ -41,24 +47,16 @@ class ScriptedActor(Actor):
     """
     script: list[ScriptKeyPoint] = []
 
-    def get_action(self, action: str):
-        """
-        Retrieves the action method corresponding to the given action name.
-
-        Args:
-            action (str): The name of the action to retrieve.
-
-        Raises:
-            NotImplementedError: This method should be implemented by subclasses.
-        """
-        raise NotImplementedError
-
     def update(self):
         """
         Updates the state of the ScriptedActor by executing actions from the script
         that are scheduled to occur before the current time.
         """
-        while self.script and self.script[0].timestamp < datetime.now(tz=self.script[0].timestamp.tzinfo):
+        while self.script:
+            if self.script[0].timestamp >= datetime.now(tz=self.script[0].timestamp.tzinfo):
+                break
             next_key_point = self.script.pop(0)
             action = self.get_action(next_key_point.action)
-            action(*next_key_point.args, **next_key_point.kwargs)
+            if action:
+                yield from action(*next_key_point.args, **next_key_point.kwargs)
+        yield from super().update()
