@@ -27,6 +27,13 @@ class Entity(BaseModel):
         """
         return all(child.propagate_event(entity, event) is not False for child in self.children[::])
 
+    def handle_event(self, entity, event: Event):
+        """
+        Handles an event that has been propagated to the entity.
+        """
+        for child in self.children[::]:
+            child.handle_event(entity, event)
+
     def update(self) -> Iterator[tuple[Self, Event]]:
         """
         Updates the state of the entity and its children.
@@ -40,20 +47,22 @@ class Entity(BaseModel):
                 event_source, event = next(producer.update())
             except StopIteration:
                 continue
-            if self.propagate_event(event_source, event) is not False:  # Propagate on None or True
-                yield event_source, event
+            if self.propagate_event(event_source, event) is False:
+                self.handle_event(event_source, event)
+            else:
+                self.emit_event(event, source=event_source)
 
         yield from self.pop_event_batch_iterator()
 
     def pop_event_batch_iterator(self) -> Iterator[tuple[Self, Event]]:
         staged_events_for_production, self.staged_events_for_production = self.staged_events_for_production, []
-        yield from ((self, event) for event in staged_events_for_production[::])
+        yield from staged_events_for_production[::]
 
-    def emit_event(self, event: Event):
+    def emit_event(self, event: Event, source=None):
         """
         Emits an event from the entity.
         """
-        self.staged_events_for_production.append(event)
+        self.staged_events_for_production.append((source or self, event))
 
     def act(self) -> Iterator[Event]:
         """

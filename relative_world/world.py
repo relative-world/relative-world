@@ -5,9 +5,10 @@ from freezegun import freeze_time
 
 from relative_world.entity import Entity
 from relative_world.event import Event
+from relative_world.location import Location
 
 
-class RelativeWorld(Entity):
+class RelativeWorld(Location):
     """
     RelativeWorld is an all-encapsulating simulation where time progresses on a defined tick.
 
