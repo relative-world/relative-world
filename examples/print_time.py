@@ -55,8 +55,6 @@ time_logger = TimeLoggerActor(
 
 world.add_entity(time_logger)
 
-print(world.model_dump_json(indent=2))
-
 while True:
     for entity, event in world.update():
         print(world.simulation_start_time, entity.id, event.message)
