@@ -1,16 +1,15 @@
 import unittest
 from relative_world.entity import Entity
-from relative_world.bound_event import BoundEvent
 from relative_world.event import Event, EventType
 
 
 class ExampleEntity(Entity):
-    def propagate_event(self, entity, event: BoundEvent) -> bool:
+    def propagate_event(self, entity, event: Event) -> bool:
         return True
 
 
 class ExampleCancellingEntity(Entity):
-    def propagate_event(self, entity, event: BoundEvent) -> bool:
+    def propagate_event(self, entity, event: Event) -> bool:
         return False
 
 
@@ -22,8 +21,7 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleCancellingEntity()
         parent.children = [child1, child2]
 
-        event = BoundEvent(source_entity=parent,
-                           event=Event(type=EventType.SAY_ALOUD, context={}))
+        event = Event(type=EventType.SAY_ALOUD, context={})
         result = parent.propagate_event(parent, event)
         self.assertFalse(
             result, "Event should not propagate because one child cancels it"
@@ -35,8 +33,7 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleEntity()
         parent.children = [child1, child2]
 
-        event = BoundEvent(source_entity=parent,
-                           event=Event(type=EventType.SAY_ALOUD, context={}))
+        event = Event(type=EventType.SAY_ALOUD, context={})
         result = parent.propagate_event(parent, event)
         self.assertTrue(result, "Event should propagate because all children allow it")
 

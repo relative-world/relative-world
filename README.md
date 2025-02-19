@@ -99,10 +99,9 @@ Entities can handle events by implementing the `handle_event` method:
 
 ```python
 from relative_world.entity import Entity
-from relative_world.bound_event import BoundEvent
 
 class MyEntity(Entity):
-    def handle_event(self, event: BoundEvent) -> bool:
+    def propagate_event(self, event: Event) -> bool:
         print(f"Handling event: {event}")
         return True
 ```
