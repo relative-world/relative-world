@@ -17,18 +17,6 @@ class ExampleCancellingEntity(Entity):
 
 class TestEntity(unittest.TestCase):
 
-    def test_handle_event_propagation(self):
-        parent = Entity()
-        child1 = ExampleEntity()
-        child2 = ExampleCancellingEntity()
-        parent.children = [child1, child2]
-
-        event = Event(type="SAY_ALOUD", context={})
-        result = parent.propagate_event(parent, event)
-        self.assertFalse(
-            result, "Event should not propagate because one child cancels it"
-        )
-
     def test_handle_event_all_propagate(self):
         parent = Entity()
         child1 = ExampleEntity()

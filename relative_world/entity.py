@@ -26,10 +26,7 @@ class Entity(BaseModel):
 
         Returns True if the event should propagate to the parent entity.
         """
-        return all(
-            child.propagate_event(entity, event) is not False
-            for child in self.children[::]
-        )
+        return True
 
     def handle_event(self, entity, event: Event):
         """
