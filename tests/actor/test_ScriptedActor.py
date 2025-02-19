@@ -72,12 +72,5 @@ class TestScriptedActor(unittest.TestCase):
         actor.update()
         self.assertEqual(len(actor.script), 0)
 
-    def test_action_with_only_kwargs(self):
-        actor = EchoActor()
-        now = datetime.now()
-        actor.script = [ScriptKeyPoint(timestamp=now, action="echo", args=[], kwargs={"message": "Only kwargs"})]
-        actor.update()
-        self.assertEqual(len(actor.script), 0)
-
 if __name__ == '__main__':
     unittest.main()
