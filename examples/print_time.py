@@ -56,6 +56,8 @@ class TimeLoggerActor(ScriptedEntity):
         """
         if action == "log_time":
             return self.log_time
+        if action == "log_tick":
+            return self.log_time
         return None
 
     def log_time(self):
