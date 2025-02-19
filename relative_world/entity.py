@@ -3,6 +3,8 @@ from typing import Self
 
 from pydantic import BaseModel
 
+from relative_world.events import BoundEvent
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,18 +18,31 @@ class Entity(BaseModel):
 
     children: list[Self] = []
 
-    def error_handler(self, exc):
+    def handle_event(self, event: BoundEvent) -> bool:
         """
-        Handles errors by logging the exception.
+        Handles an event by applying it to the entity.
 
         Args:
-            exc (Exception): The exception to handle.
+            event (BoundEvent): The event to handle.
+
+        Return:
+            True if the event should propagate further.
         """
-        logger.exception(exc_info=exc)
+        for child in self.children:
+            if not child.handle_event(event):
+                return False
+        return True
 
     def update(self):
         """
         Updates the state of the entity and its children.
+
+        Applies child events to each child entity as they occur
         """
         for child in self.children:
-            child.update()
+            for event in child.update():
+                if self.handle_event(event):
+                    yield event
+
+
+BoundEvent.model_rebuild()
