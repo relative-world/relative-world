@@ -56,7 +56,8 @@ poetry run pytest
 You can define an actor by subclassing the `Actor` class and implementing the `get_action` method:
 
 ```python
-from relative_world.actor import Actor
+from relative_world.scripted_entity import Actor
+
 
 class MyActor(Actor):
     def get_action(self, action: str):
@@ -73,7 +74,8 @@ A `ScriptedActor` can be created by defining a script with `ScriptKeyPoint` inst
 
 ```python
 from datetime import datetime, timedelta
-from relative_world.actor import ScriptedActor, ScriptKeyPoint
+from relative_world.scripted_entity import ScriptedActor, ScriptKeyPoint
+
 
 class MyScriptedActor(ScriptedActor):
     script: list[ScriptKeyPoint] = [

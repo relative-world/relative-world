@@ -14,7 +14,5 @@ class EventType(str, enum.Enum):
 
 
 class Event(BaseModel):
-    type: EventType
+    type: str
     context: dict[str, Any]
-
-
