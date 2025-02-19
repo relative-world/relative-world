@@ -16,11 +16,13 @@ import time
 from datetime import timedelta
 
 from relative_world.entity import Entity
-from relative_world.event import Event, EventType
+from relative_world.event import Event
 from relative_world.location import Location
 from relative_world.scripted_entity import ScriptKeyPoint, ScriptedEntity
 from relative_world.time import utcnow
 from relative_world.world import RelativeWorld
+
+EVENT_TYPE_SAY_ALOUD = "SAY_ALOUD"
 
 
 class SayAloudEvent(Event):
@@ -31,7 +33,8 @@ class SayAloudEvent(Event):
         type (EventType): The type of the event, set to SAY_ALOUD.
         message (str): The message to be said aloud.
     """
-    type: EventType = EventType.SAY_ALOUD
+
+    type: str = EVENT_TYPE_SAY_ALOUD
     message: str
 
 
@@ -42,6 +45,7 @@ class TimeLoggerActor(ScriptedEntity):
     Attributes:
         iteration_count (int): The number of iterations the entity has gone through.
     """
+
     iteration_count: int = 0
 
     def get_action(self, action: str):
@@ -64,7 +68,9 @@ class TimeLoggerActor(ScriptedEntity):
         """
         Logs the current time by emitting a SayAloudEvent with the current time as the message.
         """
-        self.emit_event(SayAloudEvent(message=f"The time is {utcnow().isoformat()}", context={}))
+        self.emit_event(
+            SayAloudEvent(message=f"The time is {utcnow().isoformat()}", context={})
+        )
 
     def log_tick(self):
         """
@@ -94,6 +100,7 @@ class MessagePrinter(Entity):
     Attributes:
         name (str): The name of the printer.
     """
+
     name: str
 
     def handle_event(self, entity, event) -> bool:
@@ -121,7 +128,7 @@ time_logger = TimeLoggerActor(
             timestamp=utcnow() + timedelta(minutes=45),
             action="log_time",
             args=[],
-            kwargs={}
+            kwargs={},
         )
     ]
 )

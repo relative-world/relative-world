@@ -16,6 +16,7 @@ class Entity(BaseModel):
     Attributes:
         children (list[Self]): A list of child entities.
     """
+
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
     children: Annotated[list[Self], Field(default_factory=list)]
     staged_events_for_production: Annotated[list[Event], Field(default_factory=list)]
@@ -25,7 +26,10 @@ class Entity(BaseModel):
 
         Returns True if the event should propagate to the parent entity.
         """
-        return all(child.propagate_event(entity, event) is not False for child in self.children[::])
+        return all(
+            child.propagate_event(entity, event) is not False
+            for child in self.children[::]
+        )
 
     def handle_event(self, entity, event: Event):
         """
@@ -55,7 +59,10 @@ class Entity(BaseModel):
         yield from self.pop_event_batch_iterator()
 
     def pop_event_batch_iterator(self) -> Iterator[tuple[Self, Event]]:
-        staged_events_for_production, self.staged_events_for_production = self.staged_events_for_production, []
+        staged_events_for_production, self.staged_events_for_production = (
+            self.staged_events_for_production,
+            [],
+        )
         yield from staged_events_for_production[::]
 
     def emit_event(self, event: Event, source=None):

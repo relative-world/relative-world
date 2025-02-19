@@ -51,7 +51,7 @@ class ScriptedEntity(Entity):
         that are scheduled to occur before the current time.
         """
         while self.script and self.script[0].timestamp <= datetime.now(
-                tz=self.script[0].timestamp.tzinfo
+            tz=self.script[0].timestamp.tzinfo
         ):
             next_key_point = self.script.pop(0)
             action = self.get_action(next_key_point.action)

@@ -1,7 +1,7 @@
 import unittest
 
 from relative_world.entity import Entity
-from relative_world.event import Event, EventType
+from relative_world.event import Event
 from relative_world.location import Location
 
 
@@ -23,7 +23,7 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleCancellingEntity()
         parent.children = [child1, child2]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         result = parent.propagate_event(parent, event)
         self.assertFalse(
             result, "Event should not propagate because one child cancels it"
@@ -35,7 +35,7 @@ class TestEntity(unittest.TestCase):
         child2 = ExampleEntity()
         parent.children = [child1, child2]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         result = parent.propagate_event(parent, event)
         self.assertTrue(result, "Event should propagate because all children allow it")
 
@@ -58,7 +58,7 @@ class TestEntity(unittest.TestCase):
             def update(self):
                 if not self.ran_once:
                     self.ran_once = True
-                    yield self, Event(type=EventType.SAY_ALOUD, context={})
+                    yield self, Event(type="SAY_ALOUD", context={})
 
         parent = Entity()
         child = EventGeneratingEntity()
@@ -80,40 +80,52 @@ class TestEntity(unittest.TestCase):
         child = ExampleEntity()
         parent.children = [child]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         parent.handle_event(parent, event)
         # Assuming handle_event should propagate the event to children
-        self.assertTrue(child.propagate_event(parent, event), "Event should be handled by child entity")
+        self.assertTrue(
+            child.propagate_event(parent, event),
+            "Event should be handled by child entity",
+        )
 
     def test_handle_event_with_cancelling_child(self):
         parent = Location(private=False)
         child = ExampleCancellingEntity()
         parent.children = [child]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         parent.handle_event(parent, event)
         # Assuming handle_event should not propagate the event if child cancels it
-        self.assertFalse(child.propagate_event(parent, event), "Event should not be handled by child entity")
+        self.assertFalse(
+            child.propagate_event(parent, event),
+            "Event should not be handled by child entity",
+        )
 
     def test_handle_event(self):
         parent = Location(private=False)
         child = ExampleEntity()
         parent.children = [child]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         parent.handle_event(parent, event)
         # Assuming handle_event should propagate the event to children
-        self.assertTrue(child.propagate_event(parent, event), "Event should be handled by child entity")
+        self.assertTrue(
+            child.propagate_event(parent, event),
+            "Event should be handled by child entity",
+        )
 
     def test_handle_event_with_cancelling_child(self):
         parent = Location(private=False)
         child = ExampleCancellingEntity()
         parent.children = [child]
 
-        event = Event(type=EventType.SAY_ALOUD, context={})
+        event = Event(type="SAY_ALOUD", context={})
         parent.handle_event(parent, event)
         # Assuming handle_event should not propagate the event if child cancels it
-        self.assertFalse(child.propagate_event(parent, event), "Event should not be handled by child entity")
+        self.assertFalse(
+            child.propagate_event(parent, event),
+            "Event should not be handled by child entity",
+        )
 
     def test_add_entity(self):
         parent = Location(private=False)
@@ -126,7 +138,10 @@ class TestEntity(unittest.TestCase):
         child = ExampleEntity()
         parent.add_entity(child)
         parent.remove_entity(child)
-        self.assertNotIn(child, parent.children, "Child entity should be removed from parent")
+        self.assertNotIn(
+            child, parent.children, "Child entity should be removed from parent"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

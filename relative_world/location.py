@@ -7,6 +7,7 @@ class Location(Entity):
 
     Private locations will not bubble events to their parents.
     """
+
     private: bool = True
 
     def __init__(self, *args, **kwargs):
@@ -15,4 +16,3 @@ class Location(Entity):
     def propagate_event(self, entity, event) -> bool:
         downstream = super().propagate_event(entity, event)
         return not self.private and downstream
-
