@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 
-from relative_world.scripted_entity import ScriptKeyPoint, ScriptedActor
+from relative_world.scripted_entity import ScriptKeyPoint, ScriptedEntity
 from relative_world.event import Event, EventType
 from relative_world.time import utcnow
 from relative_world.world import RelativeWorld
@@ -15,7 +15,7 @@ class SayAloudEvent(Event):
     message: str
 
 
-class TimeLoggerActor(ScriptedActor):
+class TimeLoggerActor(ScriptedEntity):
     iteration_count: int = 0
 
     def get_action(self, action: str):
