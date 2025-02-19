@@ -11,7 +11,7 @@ class BoundEvent(BaseModel):
         entity (Entity): The entity that the event is bound to.
     """
 
-    source_entity: 'Entity'
+    source_entity: "Entity"
     created_at: datetime.datetime = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def apply(self):

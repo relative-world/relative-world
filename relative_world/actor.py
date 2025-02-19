@@ -32,6 +32,7 @@ class ScriptKeyPoint(Entity):
         args (list[Any]): The positional arguments for the action.
         kwargs (dict[str, Any]): The keyword arguments for the action.
     """
+
     timestamp: datetime
     action: str
     args: list[Any]
@@ -45,6 +46,7 @@ class ScriptedActor(Actor):
     Attributes:
         script (list[ScriptKeyPoint]): The list of script key points to be executed.
     """
+
     script: list[ScriptKeyPoint] = []
 
     def update(self):
@@ -52,9 +54,9 @@ class ScriptedActor(Actor):
         Updates the state of the ScriptedActor by executing actions from the script
         that are scheduled to occur before the current time.
         """
-        while self.script:
-            if self.script[0].timestamp >= datetime.now(tz=self.script[0].timestamp.tzinfo):
-                break
+        while self.script and self.script[0].timestamp <= datetime.now(
+                tz=self.script[0].timestamp.tzinfo
+            ):
             next_key_point = self.script.pop(0)
             action = self.get_action(next_key_point.action)
             if action:

@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta, timezone
 import unittest
-
-from pydantic import BaseModel
+from datetime import datetime, timedelta, timezone
 
 from relative_world.actor import ScriptedActor, ScriptKeyPoint
+
 
 class EchoActor(ScriptedActor):
     script: list[ScriptKeyPoint] = []
@@ -15,6 +14,7 @@ class EchoActor(ScriptedActor):
     def echo(self, message=""):
         return f"Echo: {message}"
 
+
 class TestScriptedActor(unittest.TestCase):
     def test_no_script(self):
         actor = EchoActor()
@@ -24,7 +24,9 @@ class TestScriptedActor(unittest.TestCase):
     def test_single_action_executes(self):
         now = datetime.now(tz=timezone.utc)
         actor = EchoActor(
-            script=[ScriptKeyPoint(timestamp=now, action="echo", args=["Test"], kwargs={})]
+            script=[
+                ScriptKeyPoint(timestamp=now, action="echo", args=["Test"], kwargs={})
+            ]
         )
         for _ in actor.update():
             continue
@@ -33,7 +35,11 @@ class TestScriptedActor(unittest.TestCase):
     def test_future_action_skips(self):
         actor = EchoActor()
         future_time = datetime.now() + timedelta(seconds=5)
-        actor.script = [ScriptKeyPoint(timestamp=future_time, action="echo", args=["Future"], kwargs={})]
+        actor.script = [
+            ScriptKeyPoint(
+                timestamp=future_time, action="echo", args=["Future"], kwargs={}
+            )
+        ]
         actor.update()
         self.assertEqual(len(actor.script), 1)
 
@@ -41,20 +47,38 @@ class TestScriptedActor(unittest.TestCase):
         now = datetime.now(tz=timezone.utc)
         past_time = now - timedelta(seconds=1)
         future_time = now + timedelta(seconds=5)
-        actor = EchoActor(script=[
-            ScriptKeyPoint(timestamp=past_time, action="echo", args=["Past"], kwargs={}),
-            ScriptKeyPoint(timestamp=now, action="echo", args=["Immediate"], kwargs={}),
-            ScriptKeyPoint(timestamp=future_time, action="echo", args=["Future"], kwargs={})
-        ])
+        actor = EchoActor(
+            script=[
+                ScriptKeyPoint(
+                    timestamp=past_time, action="echo", args=["Past"], kwargs={}
+                ),
+                ScriptKeyPoint(
+                    timestamp=now, action="echo", args=["Immediate"], kwargs={}
+                ),
+                ScriptKeyPoint(
+                    timestamp=future_time, action="echo", args=["Future"], kwargs={}
+                ),
+            ]
+        )
         for _ in actor.update():
             continue
         self.assertEqual(1, len(actor.script))
-        self.assertEqual(["Future"], actor.script[0].args, )
+        self.assertEqual(
+            ["Future"],
+            actor.script[0].args,
+        )
 
     def test_action_with_kwargs(self):
         actor = EchoActor()
         now = datetime.now()
-        actor.script = [ScriptKeyPoint(timestamp=now, action="echo", args=[], kwargs={"message": "Test with kwargs"})]
+        actor.script = [
+            ScriptKeyPoint(
+                timestamp=now,
+                action="echo",
+                args=[],
+                kwargs={"message": "Test with kwargs"},
+            )
+        ]
         for _ in actor.update():
             continue
         self.assertEqual(0, len(actor.script))
@@ -62,7 +86,9 @@ class TestScriptedActor(unittest.TestCase):
     def test_past_action_executes(self):
         actor = EchoActor()
         past_time = datetime.now() - timedelta(seconds=5)
-        actor.script = [ScriptKeyPoint(timestamp=past_time, action="echo", args=["Past"], kwargs={})]
+        actor.script = [
+            ScriptKeyPoint(timestamp=past_time, action="echo", args=["Past"], kwargs={})
+        ]
         for _ in actor.update():
             continue
         self.assertEqual(0, len(actor.script))
@@ -77,10 +103,13 @@ class TestScriptedActor(unittest.TestCase):
     def test_action_with_no_args_or_kwargs(self):
         actor = EchoActor()
         now = datetime.now()
-        actor.script = [ScriptKeyPoint(timestamp=now, action="echo", args=[], kwargs={})]
+        actor.script = [
+            ScriptKeyPoint(timestamp=now, action="echo", args=[], kwargs={})
+        ]
         for _ in actor.update():
             continue
         self.assertEqual(0, len(actor.script))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
