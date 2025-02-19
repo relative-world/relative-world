@@ -10,25 +10,51 @@ def time_as_relative_string(start: datetime, end: datetime) -> str:
         (honestly... idk, trying things is about learning things)
     """
     delta = end - start
-    if delta < timedelta(seconds=60):
-        return "just now"
-    if delta < timedelta(minutes=2):
-        return "a minute ago"
-    if delta < timedelta(minutes=60):
-        return f"{delta.seconds // 60} minutes ago"
-    if delta < timedelta(hours=2):
-        return "an hour ago"
-    if delta < timedelta(hours=24):
-        return f"earlier today"
-    if delta < timedelta(days=2):
-        return "yesterday"
-    if delta < timedelta(days=7):
-        return f"{delta.days} days ago"
-    if delta < timedelta(days=30):
-        return "last week"
-    if delta < timedelta(days=365):
-        return "this year"
-    if delta < timedelta(days=365 * 2):
-        return "a year ago"
+    print(start, end, delta)
+    if start > end:
+        delta = -delta
+        if delta < timedelta(seconds=60):
+            return "in a few seconds"
+        if delta < timedelta(minutes=2):
+            return "in a minute"
+        if delta < timedelta(minutes=60):
+            return f"in {delta.seconds // 60} minutes"
+        if delta < timedelta(hours=2):
+            return "in an hour"
+        if delta < timedelta(hours=24):
+            return f"in {delta.seconds // 3600} hours"
+        if delta < timedelta(days=2):
+            return "tomorrow"
+        if delta < timedelta(days=7):
+            return f"in {delta.days} days"
+        if delta < timedelta(days=30):
+            return "next week"
+        if delta < timedelta(days=365):
+            return "later this year"
+        if delta < timedelta(days=365 * 2):
+            return "next year"
+        else:
+            return f"in {delta.days // 365} years"
     else:
-        return f"{delta.days // 365} years ago"
+        if delta < timedelta(seconds=60):
+            return "just now"
+        if delta < timedelta(minutes=2):
+            return "a minute ago"
+        if delta < timedelta(minutes=60):
+            return f"{delta.seconds // 60} minutes ago"
+        if delta < timedelta(hours=2):
+            return "an hour ago"
+        if delta < timedelta(hours=24):
+            return "earlier today"
+        if delta < timedelta(days=2):
+            return "yesterday"
+        if delta < timedelta(days=7):
+            return f"{delta.days} days ago"
+        if delta < timedelta(days=30):
+            return "last week"
+        if delta < timedelta(days=365):
+            return "this year"
+        if delta < timedelta(days=365 * 2):
+            return "a year ago"
+        else:
+            return f"{delta.days // 365} years ago"
