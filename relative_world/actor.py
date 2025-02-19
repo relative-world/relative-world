@@ -16,23 +16,14 @@ class ScriptKeyPoint(Entity):
     kwargs: dict[str, Any]
 
 
-known_actions = {
-    "echo": lambda *args, **kwargs: print(args, kwargs),
-}
-
-def get_action(action):
-    return known_actions[action]
-
-
 class ScriptedActor(Actor):
-    script: list[ScriptKeyPoint]
+    script: list[ScriptKeyPoint] = []
+
+    def get_action(action):
+        raise NotImplementedError
 
     def update(self):
-        if not self.script:
-            return
-
-        next_key_point = self.script[0]
-        if next_key_point.timestamp < datetime.now(tz=next_key_point.timestamp.tzinfo):
-            action = get_action(next_key_point.action)
+        while self.script and self.script[0].timestamp < datetime.now(tz=self.script[0].timestamp.tzinfo):
+            next_key_point = self.script.pop(0)
+            action = self.get_action(next_key_point.action)
             action(*next_key_point.args, **next_key_point.kwargs)
-            self.script.pop(0)
