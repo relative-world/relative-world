@@ -1,8 +1,7 @@
 import logging
-from typing import Self
+from typing import Self, Iterator
 
 from pydantic import BaseModel
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,30 +16,33 @@ class Entity(BaseModel):
 
     children: list[Self] = []
 
-    def handle_event(self, event: 'BoundEvent') -> bool:
+    def propagate_event(self, event: 'BoundEvent') -> bool:
+        """Propagates an event to the entity and its children.
+
+        Returns True if the event should propagate to the parent entity.
         """
-        Handles an event by applying it to the entity.
+        return all(child.propagate_event(event) for child in self.children[::])
 
-        Args:
-            event (BoundEvent): The event to handle.
-
-        Return:
-            True if the event should propagate further.
-        """
-        for child in self.children:
-            if not child.handle_event(event):
-                return False
-        return True
-
-    def update(self):
+    def update(self) -> Iterator['BoundEvent']:
         """
         Updates the state of the entity and its children.
 
         Applies child events to each child entity as they occur
         """
-        for child in self.children:
-            for event in child.update():
-                if self.handle_event(event):
-                    yield event
-        yield from []
+        event_producers = self.children[::]
+        while event_producers:
+            producer = event_producers.pop(0)
+            try:
+                event = next(producer.update())
+            except StopIteration:
+                continue
+            if self.propagate_event(event):
+                yield event
 
+        yield from self.act()
+
+    def act(self) -> Iterator['BoundEvent']:
+        """
+        Performs an action and yields any events that result from the action.
+        """
+        yield from ()
