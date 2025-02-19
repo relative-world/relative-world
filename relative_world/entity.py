@@ -18,7 +18,7 @@ class Entity(BaseModel):
     """
 
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
-    children: Annotated[list[Self], Field(default_factory=list)]
+    children: Annotated[list['Entity'], Field(default_factory=list)]
     staged_events_for_production: Annotated[list[Event], Field(default_factory=list)]
 
     def propagate_event(self, entity, event) -> bool:
@@ -66,6 +66,7 @@ class Entity(BaseModel):
         """
         Emits an event from the entity.
         """
+        logger.info(f"%s emitted %s", self.id, event)
         self.staged_events_for_production.append((source or self, event))
 
     def act(self) -> Iterator[Event]:

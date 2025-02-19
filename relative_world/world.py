@@ -1,11 +1,13 @@
 from datetime import timedelta, datetime
-from typing import Iterator
+from typing import Iterator, Annotated
 
 from freezegun import freeze_time
+from pydantic import Field
 
 from relative_world.entity import Entity
 from relative_world.event import Event
 from relative_world.location import Location
+from relative_world.time import utcnow
 
 
 class RelativeWorld(Location):
@@ -18,7 +20,7 @@ class RelativeWorld(Location):
         previous_iterations (int): The number of previous iterations of the simulation.
     """
 
-    simulation_start_time: datetime | None = None
+    simulation_start_time: Annotated[datetime, Field(default_factory=utcnow)]
     time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
 
