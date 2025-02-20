@@ -1,12 +1,13 @@
 import logging
 import uuid
-from typing import Self, Iterator, Annotated
+from typing import Self, Iterator, Annotated, Type, Callable
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 from relative_world.event import Event
 
 logger = logging.getLogger(__name__)
+
 
 class Entity(BaseModel):
     """
@@ -20,7 +21,8 @@ class Entity(BaseModel):
 
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
     children: Annotated[list['Entity'], Field(default_factory=list)]
-    staged_events_for_production: Annotated[list[Event], Field(default_factory=list)]
+    _staged_events_for_production: Annotated[list[Event], PrivateAttr()] = []
+    _event_handlers: Annotated[dict[Type[Event], Callable[['Entity', Event], None]], PrivateAttr()] = {}
 
     def propagate_event(self, entity, event) -> bool:
         """
@@ -35,6 +37,19 @@ class Entity(BaseModel):
         """
         return True
 
+    def set_event_handler(
+            self,
+            event_type: Type[Event],
+            event_handler: Callable[['Entity', Event], None]
+    ):
+        self._event_handlers[event_type] = event_handler
+
+    def clear_event_handler(
+            self,
+            event_type: Type[Event],
+    ):
+        self._event_handlers.pop(event_type)
+
     def handle_event(self, entity, event: Event):
         """
         Handles an event that has been propagated to the entity.
@@ -43,6 +58,9 @@ class Entity(BaseModel):
             entity (Entity): The entity that the event is propagated to.
             event (Event): The event to handle.
         """
+        handler = self._event_handlers.get(event.__class__)
+        if handler:
+            handler(entity, event)
         for child in self.children[::]:
             child.handle_event(entity, event)
 
@@ -94,8 +112,8 @@ class Entity(BaseModel):
         Yields:
             Iterator[tuple[Entity, Event]]: An iterator of tuples containing the entity and the event.
         """
-        staged_events_for_production, self.staged_events_for_production = (
-            self.staged_events_for_production,
+        staged_events_for_production, self._staged_events_for_production = (
+            self._staged_events_for_production,
             [],
         )
         yield from staged_events_for_production[::]
@@ -109,7 +127,7 @@ class Entity(BaseModel):
             source (Entity, optional): The source entity of the event. Defaults to None.
         """
         logger.info(f"%s emitted %s", self.id, event)
-        self.staged_events_for_production.append((source or self, event))
+        self._staged_events_for_production.append((source or self, event))
 
     def act(self) -> Iterator[Event]:
         """
