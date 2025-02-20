@@ -60,6 +60,7 @@ class Entity(BaseModel):
             entity (Entity): The entity that the event is propagated to.
             event (Event): The event to handle.
         """
+        logger.debug(f"%s received event %s", self.id, event)
         handler = self._event_handlers.get(event.__class__)
         if handler:
             handler(entity, event)
