@@ -4,8 +4,7 @@ from typing import Iterator, Annotated
 from freezegun import freeze_time
 from pydantic import Field
 
-from relative_world.entity import Entity
-from relative_world.event import Event
+from relative_world.event import BoundEvent
 from relative_world.location import Location
 from relative_world.time import utcnow
 
@@ -24,7 +23,7 @@ class RelativeWorld(Location):
     time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
 
-    def update(self) -> Iterator[tuple[Entity, Event]]:
+    def update(self) -> Iterator[BoundEvent]:
         """
         Advances the simulation by one time step and updates the state of the world.
         """
