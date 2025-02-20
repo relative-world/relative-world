@@ -5,8 +5,7 @@ from typing import Iterator, Annotated
 from freezegun import freeze_time
 from pydantic import Field
 
-from relative_world.entity import Entity
-from relative_world.event import BoundEvent
+from relative_world.entity import Entity, BoundEvent
 from relative_world.location import Location
 from relative_world.time import utcnow
 

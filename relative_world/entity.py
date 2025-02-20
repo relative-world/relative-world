@@ -4,9 +4,11 @@ from typing import Iterator, Annotated, Type, Callable
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from relative_world.event import Event, BoundEvent
+from relative_world.event import Event
 
 logger = logging.getLogger(__name__)
+
+type BoundEvent = tuple[Entity, Event]
 
 
 class Entity(BaseModel):
@@ -148,3 +150,5 @@ class Entity(BaseModel):
         """
         if child in self.children:
             self.children.remove(child)
+
+
