@@ -2,16 +2,36 @@ from datetime import datetime, timedelta, timezone
 
 
 def utcnow():
+    """
+    Get the current UTC time.
+
+    Returns
+    -------
+    datetime
+        The current UTC time.
+    """
     return datetime.now(timezone.utc)
 
 
 def time_as_relative_string(start: datetime, end: datetime) -> str:
-    """Returns the delta time from start to end as a string relative to the present.
+    """
+    Returns the delta time from start to end as a string relative to the present.
 
-    e.g. "in 5 minutes", "5 minutes ago", "last week", "last month", "a year ago", "5 years ago"
+    Examples
+    --------
+    "in 5 minutes", "5 minutes ago", "last week", "last month", "a year ago", "5 years ago"
 
-    The idea is that maybe LLMs can reason about these statements better than iso 8601 timestamps.
-        (honestly... idk, trying things is about learning things)
+    Parameters
+    ----------
+    start : datetime
+        The start time.
+    end : datetime
+        The end time.
+
+    Returns
+    -------
+    str
+        The relative time as a string.
     """
     delta = end - start
     if start > end:

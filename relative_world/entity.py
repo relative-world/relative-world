@@ -46,6 +46,24 @@ class Entity(BaseModel):
         for child in self.children[::]:
             child.handle_event(entity, event)
 
+    def find_by_id(self, entity_id: uuid.UUID) -> Self:
+        """
+        Finds an entity by its unique identifier.
+
+        Args:
+            entity_id (UUID): The unique identifier of the entity to find.
+
+        Returns:
+            Entity: The entity with the specified unique identifier.
+        """
+        if self.id == entity_id:
+            return self
+        for child in self.children:
+            entity = child.find_by_id(entity_id)
+            if entity:
+                return entity
+        return None
+
     def update(self) -> Iterator[tuple[Self, Event]]:
         """
         Updates the state of the entity and its children.
@@ -102,7 +120,7 @@ class Entity(BaseModel):
         """
         yield from ()
 
-    def add_entity(self, child: Self):
+    def add_entity(self, child: 'Entity'):
         """
         Adds a child entity to the entity.
 
@@ -112,7 +130,7 @@ class Entity(BaseModel):
         if child not in self.children:
             self.children.append(child)
 
-    def remove_entity(self, child: Self):
+    def remove_entity(self, child: 'Entity'):
         """
         Removes a child entity from the entity.
 
