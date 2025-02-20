@@ -1,10 +1,10 @@
 import logging
 import uuid
-from typing import Self, Iterator, Annotated, Type, Callable
+from typing import Iterator, Annotated, Type, Callable
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from relative_world.event import Event
+from relative_world.event import Event, BoundEvent
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class Entity(BaseModel):
 
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
     children: Annotated[list['Entity'], Field(default_factory=list)]
-    _staged_events_for_production: Annotated[list[Event], PrivateAttr()] = []
+    _staged_events_for_production: Annotated[list[BoundEvent], PrivateAttr()] = []
     _event_handlers: Annotated[dict[Type[Event], Callable[['Entity', Event], None]], PrivateAttr()] = {}
 
     def propagate_event(self, entity, event) -> bool:
@@ -64,7 +64,7 @@ class Entity(BaseModel):
         for child in self.children[::]:
             child.handle_event(entity, event)
 
-    def find_by_id(self, entity_id: uuid.UUID) -> Self:
+    def find_by_id(self, entity_id: uuid.UUID) -> 'Entity':
         """
         Finds an entity by its unique identifier.
 
@@ -82,7 +82,7 @@ class Entity(BaseModel):
                 return entity
         return None
 
-    def update(self) -> Iterator[tuple[Self, Event]]:
+    def update(self) -> Iterator[tuple['Entity', Event]]:
         """
         Updates the state of the entity and its children.
 
@@ -105,7 +105,7 @@ class Entity(BaseModel):
 
         yield from self.pop_event_batch_iterator()
 
-    def pop_event_batch_iterator(self) -> Iterator[tuple[Self, Event]]:
+    def pop_event_batch_iterator(self) -> Iterator[BoundEvent]:
         """
         Pops the batch of staged events for production.
 
@@ -128,15 +128,6 @@ class Entity(BaseModel):
         """
         logger.info(f"%s emitted %s", self.id, event)
         self._staged_events_for_production.append((source or self, event))
-
-    def act(self) -> Iterator[Event]:
-        """
-        Performs an action and yields any events that result from the action.
-
-        Yields:
-            Iterator[Event]: An iterator of events resulting from the action.
-        """
-        yield from ()
 
     def add_entity(self, child: 'Entity'):
         """
