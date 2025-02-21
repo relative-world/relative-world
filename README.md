@@ -1,4 +1,4 @@
-# Project Title
+# Relative World
 
 A simulation framework built in Python that manages entities, events, and locations within a dynamic world. This project leverages a structured approach to event propagation and simulation updates via time steps.
 
