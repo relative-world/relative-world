@@ -45,3 +45,15 @@ class Location(Entity):
         """
         downstream = super().propagate_event(entity, event)
         return not self.private and downstream
+
+    def add_actor(self, actor):
+        """
+        Add an actor to the location.
+
+        Parameters
+        ----------
+        actor : Actor
+            The actor to be added to the location.
+        """
+        actor.location = self
+        self.children.append(actor)

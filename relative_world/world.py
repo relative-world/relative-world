@@ -49,25 +49,38 @@ class RelativeWorld(Location):
             yield from super().update()
         self.previous_iterations += 1
 
-    def add_entity(self, child: Entity):
+    def add_location(self, location: Location):
         """
-        Adds an entity to the world and registers it in the `_locations_by_id` dictionary.
+        Adds a location to the world and registers it in the `_locations_by_id` dictionary.
 
         Args:
-            child (Entity): The entity to be added to the world.
+            location (Location): The location to be added to the world.
         """
-        self._locations_by_id[child.id] = child
-        super().add_entity(child)
+        self._locations_by_id[location.id] = location
+        super().add_entity(location)
 
-    def remove_entity(self, child: Entity):
+    def add_actor(self, actor, location=None):
         """
-        Removes an entity from the world and unregisters it from the `_locations_by_id` dictionary.
+        Add an actor to the location.
+
+        Parameters
+        ----------
+        actor : Actor
+            The actor to be added to the location.
+        """
+        actor.world = self
+        if location:
+            actor.location = location
+
+    def remove_location(self, location: Location):
+        """
+        Adds a location to the world and registers it in the `_locations_by_id` dictionary.
 
         Args:
-            child (Entity): The entity to be removed from the world.
+            location (Location): The location to be added to the world.
         """
-        self._locations_by_id.pop(child.id)
-        super().remove_entity(child)
+        self._locations_by_id[location.id] = location
+        super().add_entity(location)
 
     def get_location_by_id(self, id: uuid.UUID) -> Location:
         """

@@ -44,12 +44,14 @@ class Entity(BaseModel):
             event_type: Type[Event],
             event_handler: Callable[['Entity', Event], None]
     ):
+        logger.debug(f"Setting event handler for {event_type}")
         self._event_handlers[event_type] = event_handler
 
     def clear_event_handler(
             self,
             event_type: Type[Event],
     ):
+        logger.debug(f"Clearing event handler for {event_type}")
         self._event_handlers.pop(event_type)
 
     def handle_event(self, entity, event: Event):
@@ -101,9 +103,9 @@ class Entity(BaseModel):
                 event_source, event = next(producer.update())
             except StopIteration:
                 continue
-            if self.propagate_event(event_source, event) is False:
-                self.handle_event(event_source, event)
-            else:
+            should_propagate = self.propagate_event(event_source, event)
+            self.handle_event(event_source, event)
+            if should_propagate is True:
                 self.emit_event(event, source=event_source)
 
         yield from self.pop_event_batch_iterator()

@@ -1,11 +1,13 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Iterator
 
-from pydantic import PrivateAttr
+from pydantic import PrivateAttr, computed_field
 
-from relative_world.entity import Entity
+from relative_world.entity import Entity, BoundEvent
+from relative_world.event import Event
 from relative_world.location import Location
 from relative_world.world import RelativeWorld
+
 
 class Actor(Entity):
     """
@@ -26,8 +28,8 @@ class Actor(Entity):
         Additional data for the actor.
     """
 
-    _world: Annotated[RelativeWorld | None, PrivateAttr()]
-    location_id: uuid.UUID
+    _world: Annotated[RelativeWorld | None, PrivateAttr()] = None
+    location_id: uuid.UUID | None = None
 
     def __init__(self, *, world=None, **data):
         """
@@ -43,8 +45,9 @@ class Actor(Entity):
         super().__init__(**data)
         self._world = world
 
+    @computed_field
     @property
-    def world(self):
+    def world(self) -> RelativeWorld | None:
         """
         Gets the world in which the actor exists.
 
@@ -54,14 +57,6 @@ class Actor(Entity):
             The world in which the actor exists.
         """
         return self._world
-
-    @world.deleter
-    def world(self):
-        """
-        Deletes the world in which the actor exists.
-        """
-        self._world.remove_entity(self)
-        self._world = None
 
     @world.setter
     def world(self, value):
@@ -74,11 +69,12 @@ class Actor(Entity):
             The new world for the actor.
         """
         if self._world:
-            del self.world
+            self._world.remove_entity(self)
         self._world = value
         self._world.add_entity(self)
         self.location_id = self._world.id
 
+    @computed_field
     @property
     def location(self) -> Location | None:
         """
@@ -89,7 +85,12 @@ class Actor(Entity):
         Location | None
             The location of the actor.
         """
-        return self.world.get_location_by_id(self.location_id)
+        if not self.location_id:
+            return None
+        if world := self.world:
+            return world.get_location_by_id(self.location_id)
+        return None
+
 
     @location.setter
     def location(self, value):
@@ -101,4 +102,13 @@ class Actor(Entity):
         value : Location
             The new location for the actor.
         """
+        if self.location:
+            self.location.remove_entity(self)
         self.location_id = value.id
+
+    def update(self) -> Iterator[BoundEvent]:
+        yield from iter((self, event) for event in self.act())
+        yield from super().update()
+
+    def act(self) -> Iterator[Event]:
+        yield from ()
