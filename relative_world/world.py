@@ -29,13 +29,6 @@ class RelativeWorld(Location):
     _locations_by_id: dict[uuid.UUID, Location] = {}
     _locations_by_name: dict[str, Location] = {}
 
-    def __init_subclass__(cls, **kwargs):
-        """
-        Initializes the subclass with a reentrant lock for thread safety.
-        """
-        cls._world = synchronize.RLock()
-        super().__init_subclass__(**kwargs)
-
     def update(self) -> Iterator[BoundEvent]:
         """
         Advances the simulation by one time step and updates the state of the world.
