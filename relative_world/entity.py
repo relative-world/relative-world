@@ -16,9 +16,11 @@ class Entity(BaseModel):
     Entity is a base class for all entities in the simulation.
 
     Attributes:
+        name (str | None): The name of the entity.
         id (UUID): The unique identifier for the entity.
         children (list[Entity]): A list of child entities.
-        staged_events_for_production (list[Event]): A list of events staged for production.
+        _propagation_queue (list[BoundEvent]): A list of events staged for production.
+        _event_handlers (dict[Type[Event], Callable[['Entity', Event], None]]): A dictionary of event handlers.
     """
     name: str | None = None
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
@@ -27,21 +29,32 @@ class Entity(BaseModel):
     _event_handlers: Annotated[dict[Type[Event], Callable[['Entity', Event], None]], PrivateAttr()] = {}
 
     def __str__(self):
+        """
+        Returns a string representation of the entity.
+
+        Returns:
+            str: A string representation of the entity.
+        """
         return f"{self.__class__.__name__}(name={self.name}, id={self.id})"
 
     def __repr__(self):
+        """
+        Returns a detailed string representation of the entity.
+
+        Returns:
+            str: A detailed string representation of the entity.
+        """
         return f"{self.__class__.__name__}(name={self.name}, id={self.id})"
 
     def should_propagate_event(self, bound_event: BoundEvent) -> bool:
         """
-        Propagates an event to the entity and its children.
+        Determines if an event should propagate to the entity and its children.
 
         Args:
-            entity (Entity): The entity to propagate the event to.
-            event (Event): The event to propagate.
+            bound_event (BoundEvent): A tuple containing the entity and the event.
 
         Returns:
-            bool: True if the event should propagate to the parent entity, False otherwise.
+            bool: True if the event should propagate, False otherwise.
         """
         return True
 
@@ -50,6 +63,13 @@ class Entity(BaseModel):
             event_type: Type[Event],
             event_handler: Callable[['Entity', Event], None]
     ):
+        """
+        Sets an event handler for a specific event type.
+
+        Args:
+            event_type (Type[Event]): The type of event to handle.
+            event_handler (Callable[['Entity', Event], None]): The event handler function.
+        """
         logger.debug(f"Setting event handler for {event_type}")
         self._event_handlers[event_type] = event_handler
 
@@ -57,6 +77,12 @@ class Entity(BaseModel):
             self,
             event_type: Type[Event],
     ):
+        """
+        Clears the event handler for a specific event type.
+
+        Args:
+            event_type (Type[Event]): The type of event to clear the handler for.
+        """
         logger.debug(f"Clearing event handler for {event_type}")
         self._event_handlers.pop(event_type)
 
@@ -84,7 +110,7 @@ class Entity(BaseModel):
             entity_id (UUID): The unique identifier of the entity to find.
 
         Returns:
-            Entity: The entity with the specified unique identifier.
+            Entity: The entity with the specified unique identifier, or None if not found.
         """
         logger.debug(f"Finding entity by id {entity_id}")
         if self.id == entity_id:
@@ -105,7 +131,7 @@ class Entity(BaseModel):
         Applies child events to each child entity as they occur.
 
         Yields:
-            Iterator[tuple[Entity, Event]]: An iterator of tuples containing the entity and the event.
+            Iterator[BoundEvent]: An iterator of tuples containing the entity and the event.
         """
         logger.debug(f"Updating entity {self.id}")
         event_producers = self.children[::]
@@ -126,7 +152,6 @@ class Entity(BaseModel):
             else:
                 self.handle_event(event_source, event)
 
-
         yield from self.pop_event_batch_iterator()
 
     def pop_event_batch_iterator(self) -> Iterator[BoundEvent]:
@@ -134,7 +159,7 @@ class Entity(BaseModel):
         Pops the batch of staged events for production.
 
         Yields:
-            Iterator[tuple[Entity, Event]]: An iterator of tuples containing the entity and the event.
+            Iterator[BoundEvent]: An iterator of tuples containing the entity and the event.
         """
         logger.debug(f"Popping event batch for entity {self.id}")
         staged_events_for_production, self._propagation_queue = (

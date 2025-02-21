@@ -88,7 +88,6 @@ class Actor(Entity):
             return world.get_location_by_id(self.location_id)
         return None
 
-
     @location.setter
     def location(self, value):
         """
@@ -103,9 +102,35 @@ class Actor(Entity):
             self.location.remove_entity(self)
         self.location_id = value.id
 
+
     def update(self) -> Iterator[BoundEvent]:
+        """
+        Updates the actor's state and propagates events.
+
+        This method filters and yields events that should be propagated based on the actor's
+        `should_propagate_event` method. It also calls the superclass's `update` method to
+        ensure any additional updates are performed.
+
+        Yields
+        ------
+        Iterator[BoundEvent]
+            An iterator of `BoundEvent` instances representing the events that should be propagated.
+        """
         yield from filter(self.should_propagate_event, iter((self, event) for event in self.act()))
         yield from super().update()
 
+
     def act(self) -> Iterator[Event]:
+        """
+        Defines the actions performed by the actor.
+
+        This method should be overridden by subclasses to define the specific actions
+        that the actor performs. By default, it yields no events.
+
+        Yields
+        ------
+        Iterator[Event]
+            An iterator of `Event` instances representing the actions performed by the actor.
+        """
         yield from ()
+
