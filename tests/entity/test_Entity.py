@@ -6,12 +6,12 @@ from relative_world.location import Location
 
 
 class ExampleEntity(Entity):
-    def propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, entity, event: Event) -> bool:
         return True
 
 
 class ExampleCancellingEntity(Entity):
-    def propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, entity, event: Event) -> bool:
         return False
 
 
@@ -24,7 +24,7 @@ class TestEntity(unittest.TestCase):
         parent.children = [child1, child2]
 
         event = Event(type="SAY_ALOUD", context={})
-        result = parent.propagate_event(parent, event)
+        result = parent.should_propagate_event((parent, event))
         self.assertTrue(result, "Event should propagate because all children allow it")
 
     def test_update(self):
@@ -72,7 +72,7 @@ class TestEntity(unittest.TestCase):
         parent.handle_event(parent, event)
         # Assuming handle_event should propagate the event to children
         self.assertTrue(
-            child.propagate_event(parent, event),
+            child.should_propagate_event(parent, event),
             "Event should be handled by child entity",
         )
 
@@ -85,7 +85,7 @@ class TestEntity(unittest.TestCase):
         parent.handle_event(parent, event)
         # Assuming handle_event should not propagate the event if child cancels it
         self.assertFalse(
-            child.propagate_event(parent, event),
+            child.should_propagate_event(parent, event),
             "Event should not be handled by child entity",
         )
 
@@ -165,7 +165,7 @@ class TestEntity(unittest.TestCase):
 
     def test_propagate_event_false(self):
         class NonPropagatingEntity(Entity):
-            def propagate_event(self, entity, event: Event) -> bool:
+            def should_propagate_event(self, entity, event: Event) -> bool:
                 return False
 
         grandparent = Entity()
@@ -182,7 +182,7 @@ class TestEntity(unittest.TestCase):
         self.assertEqual(events[0][0], child, "The event should be handled by the parent entity")
         self.assertEqual(events[0][1], event, "The event should be the one emitted by the child")
         self.assertTrue(
-            any(child.propagate_event(parent, event) is False for child in parent.children),
+            any(child.should_propagate_event((parent, event)) is False for child in parent.children),
             "propagate_event should return False for the child entity"
         )
 

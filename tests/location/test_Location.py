@@ -5,12 +5,12 @@ from relative_world.location import Location
 
 
 class ExampleEntity(Entity):
-    def propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, entity, event: Event) -> bool:
         return True
 
 
 class ExampleCancellingEntity(Entity):
-    def propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, entity, event: Event) -> bool:
         return False
 
 
@@ -22,7 +22,7 @@ class TestLocation(unittest.TestCase):
         parent.children = [child]
 
         event = Event(type="SAY_ALOUD", context={})
-        result = parent.propagate_event(parent, event)
+        result = parent.should_propagate_event(parent, event)
         self.assertFalse(
             result, "Event should not propagate because location is private"
         )
@@ -33,7 +33,7 @@ class TestLocation(unittest.TestCase):
         parent.children = [child]
 
         event = Event(type="SAY_ALOUD", context={})
-        result = parent.propagate_event(parent, event)
+        result = parent.should_propagate_event(parent, event)
         self.assertTrue(
             result, "Event should propagate because location is not private"
         )

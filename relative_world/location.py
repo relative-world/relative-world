@@ -1,4 +1,5 @@
-from relative_world.entity import Entity
+from relative_world.entity import Entity, BoundEvent
+
 
 class Location(Entity):
     """
@@ -11,7 +12,6 @@ class Location(Entity):
     private : bool
         Indicates whether the location is private. Private locations do not propagate events to their parents.
     """
-
     private: bool = True
 
     def __init__(self, *args, **kwargs):
@@ -27,7 +27,7 @@ class Location(Entity):
         """
         super().__init__(*args, **kwargs)
 
-    def propagate_event(self, entity, event) -> bool:
+    def should_propagate_event(self, bound_event: BoundEvent) -> bool:
         """
         Propagate an event to the parent entity if the location is not private.
 
@@ -43,8 +43,7 @@ class Location(Entity):
         bool
             True if the event was propagated to the parent entity, False otherwise.
         """
-        downstream = super().propagate_event(entity, event)
-        return not self.private and downstream
+        return not self.private
 
     def add_actor(self, actor):
         """

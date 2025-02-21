@@ -20,13 +20,19 @@ class Entity(BaseModel):
         children (list[Entity]): A list of child entities.
         staged_events_for_production (list[Event]): A list of events staged for production.
     """
-
+    name: str | None = None
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
-    children: Annotated[list['Entity'], Field(default_factory=list)]
-    _staged_events_for_production: Annotated[list[BoundEvent], PrivateAttr()] = []
+    children: list['Entity'] = []
+    _propagation_queue: Annotated[list[BoundEvent], PrivateAttr()] = []
     _event_handlers: Annotated[dict[Type[Event], Callable[['Entity', Event], None]], PrivateAttr()] = {}
 
-    def propagate_event(self, entity, event) -> bool:
+    def __str__(self):
+        return f"{self.__class__.__name__}(name={self.name}, id={self.id})"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.name}, id={self.id})"
+
+    def should_propagate_event(self, bound_event: BoundEvent) -> bool:
         """
         Propagates an event to the entity and its children.
 
@@ -65,6 +71,7 @@ class Entity(BaseModel):
         logger.debug(f"%s received event %s", self.id, event)
         handler = self._event_handlers.get(event.__class__)
         if handler:
+            logger.debug(f"Handling event {event} with handler {handler}")
             handler(entity, event)
         for child in self.children[::]:
             child.handle_event(entity, event)
@@ -79,15 +86,19 @@ class Entity(BaseModel):
         Returns:
             Entity: The entity with the specified unique identifier.
         """
+        logger.debug(f"Finding entity by id {entity_id}")
         if self.id == entity_id:
+            logger.debug(f"Entity {entity_id} found")
             return self
         for child in self.children:
             entity = child.find_by_id(entity_id)
             if entity:
+                logger.debug(f"Entity {entity_id} found in child {child.id}")
                 return entity
+        logger.debug(f"Entity {entity_id} not found")
         return None
 
-    def update(self) -> Iterator[tuple['Entity', Event]]:
+    def update(self) -> Iterator[BoundEvent]:
         """
         Updates the state of the entity and its children.
 
@@ -96,17 +107,25 @@ class Entity(BaseModel):
         Yields:
             Iterator[tuple[Entity, Event]]: An iterator of tuples containing the entity and the event.
         """
+        logger.debug(f"Updating entity {self.id}")
         event_producers = self.children[::]
         while event_producers:
-            producer = event_producers.pop(0)
+            producer = event_producers.pop(0)  # grab the next child entity in the list
+            logger.debug(f"Processing child entity {producer.id}")
+
+            # see if the child entity has any events to produce
             try:
                 event_source, event = next(producer.update())
+                logger.debug(f"Child entity {producer.id} produced event {event}")
             except StopIteration:
+                logger.debug(f"Child entity {producer.id} has no more events")
                 continue
-            should_propagate = self.propagate_event(event_source, event)
-            self.handle_event(event_source, event)
-            if should_propagate is True:
+
+            if self.should_propagate_event((event_source, event)) is not False:
                 self.emit_event(event, source=event_source)
+            else:
+                self.handle_event(event_source, event)
+
 
         yield from self.pop_event_batch_iterator()
 
@@ -117,8 +136,9 @@ class Entity(BaseModel):
         Yields:
             Iterator[tuple[Entity, Event]]: An iterator of tuples containing the entity and the event.
         """
-        staged_events_for_production, self._staged_events_for_production = (
-            self._staged_events_for_production,
+        logger.debug(f"Popping event batch for entity {self.id}")
+        staged_events_for_production, self._propagation_queue = (
+            self._propagation_queue,
             [],
         )
         yield from staged_events_for_production[::]
@@ -132,7 +152,7 @@ class Entity(BaseModel):
             source (Entity, optional): The source entity of the event. Defaults to None.
         """
         logger.info(f"%s emitted %s", self.id, event)
-        self._staged_events_for_production.append((source or self, event))
+        self._propagation_queue.append((source or self, event))
 
     def add_entity(self, child: 'Entity'):
         """
@@ -141,6 +161,7 @@ class Entity(BaseModel):
         Args:
             child (Entity): The child entity to add.
         """
+        logger.debug(f"Adding child entity {child.id} to entity {self.id}")
         if child not in self.children:
             self.children.append(child)
 
@@ -151,7 +172,6 @@ class Entity(BaseModel):
         Args:
             child (Entity): The child entity to remove.
         """
+        logger.debug(f"Removing child entity {child.id} from entity {self.id}")
         if child in self.children:
             self.children.remove(child)
-
-

@@ -68,11 +68,8 @@ class Actor(Entity):
         value : RelativeWorld
             The new world for the actor.
         """
-        if self._world:
-            self._world.remove_entity(self)
         self._world = value
-        self._world.add_entity(self)
-        self.location_id = self._world.id
+        self.location = value
 
     @computed_field
     @property
@@ -107,7 +104,7 @@ class Actor(Entity):
         self.location_id = value.id
 
     def update(self) -> Iterator[BoundEvent]:
-        yield from iter((self, event) for event in self.act())
+        yield from filter(self.should_propagate_event, iter((self, event) for event in self.act()))
         yield from super().update()
 
     def act(self) -> Iterator[Event]:

@@ -27,6 +27,7 @@ class RelativeWorld(Location):
     time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
     _locations_by_id: dict[uuid.UUID, Location] = {}
+    _locations_by_name: dict[str, Location] = {}
 
     def __init_subclass__(cls, **kwargs):
         """
@@ -59,19 +60,6 @@ class RelativeWorld(Location):
         self._locations_by_id[location.id] = location
         super().add_entity(location)
 
-    def add_actor(self, actor, location=None):
-        """
-        Add an actor to the location.
-
-        Parameters
-        ----------
-        actor : Actor
-            The actor to be added to the location.
-        """
-        actor.world = self
-        if location:
-            actor.location = location
-
     def remove_location(self, location: Location):
         """
         Adds a location to the world and registers it in the `_locations_by_id` dictionary.
@@ -93,3 +81,30 @@ class RelativeWorld(Location):
             Location: The location associated with the given identifier, or None if not found.
         """
         return self._locations_by_id.get(id)
+
+
+    def get_location_by_name(self, name: str) -> Location:
+        """
+        Retrieves a location by its unique identifier.
+
+        Args:
+            id (uuid.UUID): The unique identifier of the location.
+
+        Returns:
+            Location: The location associated with the given identifier, or None if not found.
+        """
+        return self._locations_by_name.get(name)
+
+
+    def add_actor(self, actor, location=None):
+        """
+        Add an actor to the location.
+
+        Parameters
+        ----------
+        actor : Actor
+            The actor to be added to the location.
+        """
+        actor.world = self
+        actor.location = location or self
+        location.add_entity(actor)
