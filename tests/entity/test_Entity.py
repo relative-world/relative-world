@@ -1,6 +1,6 @@
 import unittest
 
-from relative_world.entity import Entity
+from relative_world.entity import Entity, BoundEvent
 from relative_world.event import Event
 from relative_world.location import Location
 
@@ -165,7 +165,7 @@ class TestEntity(unittest.TestCase):
 
     def test_propagate_event_false(self):
         class NonPropagatingEntity(Entity):
-            def should_propagate_event(self, entity, event: Event) -> bool:
+            def should_propagate_event(self, bound_event: BoundEvent) -> bool:
                 return False
 
         grandparent = Entity()
