@@ -6,12 +6,12 @@ from relative_world.location import Location
 
 
 class ExampleEntity(Entity):
-    def should_propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, bound_event: BoundEvent) -> bool:
         return True
 
 
 class ExampleCancellingEntity(Entity):
-    def should_propagate_event(self, entity, event: Event) -> bool:
+    def should_propagate_event(self, bound_event: BoundEvent) -> bool:
         return False
 
 
@@ -72,7 +72,7 @@ class TestEntity(unittest.TestCase):
         parent.handle_event(parent, event)
         # Assuming handle_event should propagate the event to children
         self.assertTrue(
-            child.should_propagate_event(parent, event),
+            child.should_propagate_event(bound_event=(parent, event)),
             "Event should be handled by child entity",
         )
 
@@ -85,7 +85,7 @@ class TestEntity(unittest.TestCase):
         parent.handle_event(parent, event)
         # Assuming handle_event should not propagate the event if child cancels it
         self.assertFalse(
-            child.should_propagate_event(parent, event),
+            child.should_propagate_event(bound_event=(parent, event)),
             "Event should not be handled by child entity",
         )
 
