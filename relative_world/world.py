@@ -53,6 +53,17 @@ class RelativeWorld(Location):
         self._locations_by_id[location.id] = location
         super().add_entity(location)
 
+    def iter_locations(self) -> Iterator[Location]:
+        """
+        Iterate over all locations in the world.
+
+        Yields:
+            Iterator[Location]: An iterator of `Location` instances in the world.
+        """
+        for location in self.children:
+            if isinstance(location, Location):
+                yield location
+
     def remove_location(self, location: Location):
         """
         Adds a location to the world and registers it in the `_locations_by_id` dictionary.
