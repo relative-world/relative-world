@@ -12,6 +12,7 @@ class Location(Entity):
     private : bool
         Indicates whether the location is private. Private locations do not propagate events to their parents.
     """
+
     private: bool = True
 
     def __init__(self, *args, **kwargs):

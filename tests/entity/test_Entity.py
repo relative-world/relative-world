@@ -121,7 +121,9 @@ class TestEntity(unittest.TestCase):
 
         events = list(parent.pop_event_batch_iterator())
         self.assertEqual(len(events), 1, "emit_event should add one event to the batch")
-        self.assertEqual(events[0][1], event, "The emitted event should be in the batch")
+        self.assertEqual(
+            events[0][1], event, "The emitted event should be in the batch"
+        )
 
     def test_clear_event_handler(self):
         parent = Entity()
@@ -132,7 +134,9 @@ class TestEntity(unittest.TestCase):
         self.assertIn(event_type, parent._event_handlers, "Event handler should be set")
 
         parent.clear_event_handler(event_type)
-        self.assertNotIn(event_type, parent._event_handlers, "Event handler should be cleared")
+        self.assertNotIn(
+            event_type, parent._event_handlers, "Event handler should be cleared"
+        )
 
     def test_pop_event_batch_iterator(self):
         parent = Entity()
@@ -140,12 +144,18 @@ class TestEntity(unittest.TestCase):
         parent.emit_event(event)
 
         events = list(parent.pop_event_batch_iterator())
-        self.assertEqual(len(events), 1, "pop_event_batch_iterator should yield one event")
-        self.assertEqual(events[0][1], event, "The yielded event should be the emitted event")
+        self.assertEqual(
+            len(events), 1, "pop_event_batch_iterator should yield one event"
+        )
+        self.assertEqual(
+            events[0][1], event, "The yielded event should be the emitted event"
+        )
 
         # Ensure the batch is cleared after popping
         events = list(parent.pop_event_batch_iterator())
-        self.assertEqual(len(events), 0, "The event batch should be empty after popping")
+        self.assertEqual(
+            len(events), 0, "The event batch should be empty after popping"
+        )
 
     def test_event_handler_registration_and_calling(self):
         parent = Entity()
@@ -157,11 +167,15 @@ class TestEntity(unittest.TestCase):
             handler_called = True
 
         parent.set_event_handler(event_type, handler)
-        self.assertIn(event_type, parent._event_handlers, "Event handler should be registered")
+        self.assertIn(
+            event_type, parent._event_handlers, "Event handler should be registered"
+        )
 
         event = Event(type="SAY_ALOUD", context={})
         parent.handle_event(parent, event)
-        self.assertTrue(handler_called, "Event handler should be called when event is handled")
+        self.assertTrue(
+            handler_called, "Event handler should be called when event is handled"
+        )
 
     def test_propagate_event_false(self):
         class NonPropagatingEntity(Entity):
@@ -178,13 +192,25 @@ class TestEntity(unittest.TestCase):
         child.emit_event(event)
 
         events = list(grandparent.update())
-        self.assertEqual(len(events), 1, "Event should be received by the parent but not propagated to the grandparent")
-        self.assertEqual(events[0][0], child, "The event should be handled by the parent entity")
-        self.assertEqual(events[0][1], event, "The event should be the one emitted by the child")
-        self.assertTrue(
-            any(child.should_propagate_event((parent, event)) is False for child in parent.children),
-            "propagate_event should return False for the child entity"
+        self.assertEqual(
+            len(events),
+            1,
+            "Event should be received by the parent but not propagated to the grandparent",
         )
+        self.assertEqual(
+            events[0][0], child, "The event should be handled by the parent entity"
+        )
+        self.assertEqual(
+            events[0][1], event, "The event should be the one emitted by the child"
+        )
+        self.assertTrue(
+            any(
+                child.should_propagate_event((parent, event)) is False
+                for child in parent.children
+            ),
+            "propagate_event should return False for the child entity",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

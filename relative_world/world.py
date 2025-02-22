@@ -23,6 +23,7 @@ class RelativeWorld(Location):
         previous_iterations (int): The number of previous iterations of the simulation.
         _locations_by_id (dict[uuid.UUID, Location]): A dictionary mapping location IDs to `Location` instances.
     """
+
     simulation_start_time: Annotated[datetime, Field(default_factory=utcnow)]
     time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
@@ -36,7 +37,7 @@ class RelativeWorld(Location):
             Iterator[BoundEvent]: An iterator of `BoundEvent` instances representing the events that occurred during the update.
         """
         current_time = (
-                self.simulation_start_time + self.time_step * self.previous_iterations
+            self.simulation_start_time + self.time_step * self.previous_iterations
         )
         with freeze_time(current_time):
             yield from super().update()
@@ -73,7 +74,6 @@ class RelativeWorld(Location):
             Location: The location associated with the given identifier, or None if not found.
         """
         return self._locations_by_id.get(id)
-
 
     def add_actor(self, actor, location=None):
         """

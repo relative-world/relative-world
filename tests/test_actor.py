@@ -4,6 +4,7 @@ from relative_world.actor import Actor
 from relative_world.world import RelativeWorld
 from relative_world.location import Location
 
+
 class TestActor(unittest.TestCase):
 
     def setUp(self):
@@ -36,5 +37,6 @@ class TestActor(unittest.TestCase):
         events = list(self.actor.act())
         self.assertEqual(events, [])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

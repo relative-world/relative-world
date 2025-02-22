@@ -22,11 +22,14 @@ class Entity(BaseModel):
         _propagation_queue (list[BoundEvent]): A list of events staged for production.
         _event_handlers (dict[Type[Event], Callable[['Entity', Event], None]]): A dictionary of event handlers.
     """
+
     name: str | None = None
     id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
-    children: list['Entity'] = []
+    children: list["Entity"] = []
     _propagation_queue: Annotated[list[BoundEvent], PrivateAttr()] = []
-    _event_handlers: Annotated[dict[Type[Event], Callable[['Entity', Event], None]], PrivateAttr()] = {}
+    _event_handlers: Annotated[
+        dict[Type[Event], Callable[["Entity", Event], None]], PrivateAttr()
+    ] = {}
 
     def __str__(self):
         """
@@ -59,9 +62,7 @@ class Entity(BaseModel):
         return True
 
     def set_event_handler(
-            self,
-            event_type: Type[Event],
-            event_handler: Callable[['Entity', Event], None]
+        self, event_type: Type[Event], event_handler: Callable[["Entity", Event], None]
     ):
         """
         Sets an event handler for a specific event type.
@@ -74,8 +75,8 @@ class Entity(BaseModel):
         self._event_handlers[event_type] = event_handler
 
     def clear_event_handler(
-            self,
-            event_type: Type[Event],
+        self,
+        event_type: Type[Event],
     ):
         """
         Clears the event handler for a specific event type.
@@ -102,7 +103,7 @@ class Entity(BaseModel):
         for child in self.children[::]:
             child.handle_event(entity, event)
 
-    def find_by_id(self, entity_id: uuid.UUID) -> 'Entity':
+    def find_by_id(self, entity_id: uuid.UUID) -> "Entity":
         """
         Finds an entity by its unique identifier.
 
@@ -179,7 +180,7 @@ class Entity(BaseModel):
         logger.info(f"%s emitted %s", self.id, event)
         self._propagation_queue.append((source or self, event))
 
-    def add_entity(self, child: 'Entity'):
+    def add_entity(self, child: "Entity"):
         """
         Adds a child entity to the entity.
 
@@ -190,7 +191,7 @@ class Entity(BaseModel):
         if child not in self.children:
             self.children.append(child)
 
-    def remove_entity(self, child: 'Entity'):
+    def remove_entity(self, child: "Entity"):
         """
         Removes a child entity from the entity.
 

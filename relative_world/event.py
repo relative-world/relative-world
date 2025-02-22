@@ -14,5 +14,6 @@ class Event(BaseModel):
         type (str): The type of the event.
         created_at (datetime): The timestamp when the event was created.
     """
+
     type: str
     created_at: Annotated[datetime, Field(default_factory=utcnow)]

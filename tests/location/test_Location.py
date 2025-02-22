@@ -38,5 +38,6 @@ class TestLocation(unittest.TestCase):
             result, "Event should propagate because location is not private"
         )
 
+
 if __name__ == "__main__":
     unittest.main()

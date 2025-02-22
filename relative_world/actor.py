@@ -102,7 +102,6 @@ class Actor(Entity):
             self.location.remove_entity(self)
         self.location_id = value.id
 
-
     def update(self) -> Iterator[BoundEvent]:
         """
         Updates the actor's state and propagates events.
@@ -116,9 +115,10 @@ class Actor(Entity):
         Iterator[BoundEvent]
             An iterator of `BoundEvent` instances representing the events that should be propagated.
         """
-        yield from filter(self.should_propagate_event, iter((self, event) for event in self.act()))
+        yield from filter(
+            self.should_propagate_event, iter((self, event) for event in self.act())
+        )
         yield from super().update()
-
 
     def act(self) -> Iterator[Event]:
         """
@@ -133,4 +133,3 @@ class Actor(Entity):
             An iterator of `Event` instances representing the actions performed by the actor.
         """
         yield from ()
-
