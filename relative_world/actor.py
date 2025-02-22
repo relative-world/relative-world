@@ -1,5 +1,6 @@
+import asyncio
 import uuid
-from typing import Annotated, Iterator
+from typing import Annotated, AsyncIterator
 
 from pydantic import PrivateAttr, computed_field
 
@@ -102,7 +103,7 @@ class Actor(Entity):
             self.location.remove_entity(self)
         self.location_id = value.id
 
-    def update(self) -> Iterator[BoundEvent]:
+    async def update(self) -> AsyncIterator[BoundEvent]:
         """
         Updates the actor's state and propagates events.
 
@@ -112,15 +113,16 @@ class Actor(Entity):
 
         Yields
         ------
-        Iterator[BoundEvent]
+        AsyncIterator[BoundEvent]
             An iterator of `BoundEvent` instances representing the events that should be propagated.
         """
-        yield from filter(
-            self.should_propagate_event, iter((self, event) for event in self.act())
-        )
-        yield from super().update()
+        async for event in aiter(self.act()):
+            if self.should_propagate_event(event):
+                yield self, event
+        async for bound_event in super().update():
+            yield bound_event
 
-    def act(self) -> Iterator[Event]:
+    async def act(self):
         """
         Defines the actions performed by the actor.
 
@@ -129,7 +131,8 @@ class Actor(Entity):
 
         Yields
         ------
-        Iterator[Event]
+        AsyncIterator[Event]
             An iterator of `Event` instances representing the actions performed by the actor.
         """
-        yield from ()
+        for _ in range(0):
+            yield

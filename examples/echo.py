@@ -1,4 +1,4 @@
-import time
+import asyncio
 
 from relative_world.actor import Actor
 from relative_world.event import Event
@@ -16,17 +16,17 @@ class StatementEvent(Event):
 class OlYeller(Actor):
     """An actor that yells a message."""
 
-    def act(self):
+    async def act(self):
         # Emit a StatementEvent with a message
-        return (StatementEvent(message="Hello, world!"),)
+        yield StatementEvent(message="Hello, world!")
 
 
 # Define a handler function for StatementEvent
-def echo_handler(source, event):
+async def echo_handler(source, event):
     print(f"{source.id} says: {event.message}")
 
 
-if __name__ == "__main__":
+async def main():
     # Create the world with the current UTC time as the simulation start time
     world = RelativeWorld(simulation_start_time=utcnow())
 
@@ -44,6 +44,10 @@ if __name__ == "__main__":
     # Run the simulation loop
     while True:
         # Update the world, which processes events
-        list(world.update())
+        await world.step()
         # Sleep for 1 second before the next update
-        time.sleep(1)
+        await asyncio.sleep(1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

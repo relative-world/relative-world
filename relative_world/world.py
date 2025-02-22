@@ -1,6 +1,6 @@
 import uuid
 from datetime import timedelta, datetime
-from typing import Iterator, Annotated
+from typing import AsyncIterator, Annotated
 
 from freezegun import freeze_time
 from pydantic import Field
@@ -29,18 +29,19 @@ class RelativeWorld(Location):
     previous_iterations: int = 0
     _locations_by_id: dict[uuid.UUID, Location] = {}
 
-    def update(self) -> Iterator[BoundEvent]:
+    async def update(self) -> AsyncIterator[BoundEvent]:
         """
         Advances the simulation by one time step and updates the state of the world.
 
         Yields:
-            Iterator[BoundEvent]: An iterator of `BoundEvent` instances representing the events that occurred during the update.
+            AsyncIterator[BoundEvent]: An iterator of `BoundEvent` instances representing the events that occurred during the update.
         """
         current_time = (
             self.simulation_start_time + self.time_step * self.previous_iterations
         )
         with freeze_time(current_time):
-            yield from super().update()
+            async for event in super().update():
+                yield event
         self.previous_iterations += 1
 
     def add_location(self, location: Location):
@@ -53,12 +54,12 @@ class RelativeWorld(Location):
         self._locations_by_id[location.id] = location
         super().add_entity(location)
 
-    def iter_locations(self) -> Iterator[Location]:
+    def iter_locations(self) -> AsyncIterator[Location]:
         """
         Iterate over all locations in the world.
 
         Yields:
-            Iterator[Location]: An iterator of `Location` instances in the world.
+            AsyncIterator[Location]: An iterator of `Location` instances in the world.
         """
         for location in self.children:
             if isinstance(location, Location):
@@ -98,3 +99,9 @@ class RelativeWorld(Location):
         actor.world = self
         actor.location = location or self
         location.add_entity(actor)
+
+    async def step(self):
+        try:
+            await anext(self.update())
+        except StopAsyncIteration:
+            pass

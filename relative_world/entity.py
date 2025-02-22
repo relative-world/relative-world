@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Iterator, Annotated, Type, Callable
+from typing import AsyncIterator, Annotated, Type, Callable
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -87,7 +87,7 @@ class Entity(BaseModel):
         logger.debug(f"Clearing event handler for {event_type}")
         self._event_handlers.pop(event_type)
 
-    def handle_event(self, entity, event: Event):
+    async def handle_event(self, entity, event: Event):
         """
         Handles an event that has been propagated to the entity.
 
@@ -99,11 +99,11 @@ class Entity(BaseModel):
         handler = self._event_handlers.get(event.__class__)
         if handler:
             logger.debug(f"Handling event {event} with handler {handler}")
-            handler(entity, event)
+            await handler(entity, event)
         for child in self.children[::]:
-            child.handle_event(entity, event)
+            await child.handle_event(entity, event)
 
-    def find_by_id(self, entity_id: uuid.UUID) -> "Entity":
+    async def find_by_id(self, entity_id: uuid.UUID) -> "Entity":
         """
         Finds an entity by its unique identifier.
 
@@ -118,21 +118,21 @@ class Entity(BaseModel):
             logger.debug(f"Entity {entity_id} found")
             return self
         for child in self.children:
-            entity = child.find_by_id(entity_id)
+            entity = await child.find_by_id(entity_id)
             if entity:
                 logger.debug(f"Entity {entity_id} found in child {child.id}")
                 return entity
         logger.debug(f"Entity {entity_id} not found")
         return None
 
-    def update(self) -> Iterator[BoundEvent]:
+    async def update(self) -> AsyncIterator[BoundEvent]:
         """
         Updates the state of the entity and its children.
 
         Applies child events to each child entity as they occur.
 
         Yields:
-            Iterator[BoundEvent]: An iterator of tuples containing the entity and the event.
+            AsyncIterator[BoundEvent]: An iterator of tuples containing the entity and the event.
         """
         logger.debug(f"Updating entity {self.id}")
         event_producers = self.children[::]
@@ -142,32 +142,34 @@ class Entity(BaseModel):
 
             # see if the child entity has any events to produce
             try:
-                event_source, event = next(producer.update())
+                event_source, event = await anext(producer.update())
                 logger.debug(f"Child entity {producer.id} produced event {event}")
-            except StopIteration:
+            except StopAsyncIteration:
                 logger.debug(f"Child entity {producer.id} has no more events")
                 continue
 
             if self.should_propagate_event((event_source, event)) is not False:
                 self.emit_event(event, source=event_source)
             else:
-                self.handle_event(event_source, event)
+                await self.handle_event(event_source, event)
 
-        yield from self.pop_event_batch_iterator()
+        async for event in self.pop_event_batch_iterator():
+            yield event
 
-    def pop_event_batch_iterator(self) -> Iterator[BoundEvent]:
+    async def pop_event_batch_iterator(self) -> AsyncIterator[BoundEvent]:
         """
         Pops the batch of staged events for production.
 
         Yields:
-            Iterator[BoundEvent]: An iterator of tuples containing the entity and the event.
+            AsyncIterator[BoundEvent]: An iterator of tuples containing the entity and the event.
         """
         logger.debug(f"Popping event batch for entity {self.id}")
         staged_events_for_production, self._propagation_queue = (
             self._propagation_queue,
             [],
         )
-        yield from staged_events_for_production[::]
+        for event in staged_events_for_production[::]:
+            yield event
 
     def emit_event(self, event: Event, source=None):
         """

@@ -1,4 +1,5 @@
 import unittest
+import asyncio
 
 from relative_world.entity import Entity, BoundEvent
 from relative_world.event import Event
@@ -15,9 +16,9 @@ class ExampleCancellingEntity(Entity):
         return False
 
 
-class TestEntity(unittest.TestCase):
+class TestEntity(unittest.IsolatedAsyncioTestCase):
 
-    def test_handle_event_all_propagate(self):
+    async def test_handle_event_all_propagate(self):
         parent = Entity()
         child1 = ExampleEntity()
         child2 = ExampleEntity()
@@ -27,23 +28,23 @@ class TestEntity(unittest.TestCase):
         result = parent.should_propagate_event((parent, event))
         self.assertTrue(result, "Event should propagate because all children allow it")
 
-    def test_update(self):
+    async def test_update(self):
         parent = Entity()
         child = ExampleEntity()
         parent.children = [child]
 
-        events = list(parent.update())
+        events = [event async for event in parent.update()]
         self.assertEqual(
             events,
             [],
             "Update should yield no events because ExampleEntity does not generate events",
         )
 
-    def test_update_yields_events(self):
+    async def test_update_yields_events(self):
         class EventGeneratingEntity(Entity):
             ran_once: bool = False
 
-            def update(self):
+            async def update(self):
                 if not self.ran_once:
                     self.ran_once = True
                     yield self, Event(type="SAY_ALOUD", context={})
@@ -52,7 +53,7 @@ class TestEntity(unittest.TestCase):
         child = EventGeneratingEntity()
         parent.children = [child]
 
-        events = list(parent.update())
+        events = [event async for event in parent.update()]
         self.assertEqual(len(events), 1, "Update should yield one event")
         self.assertIsInstance(
             events[0][1], Event, "Yielded event should be an instance of BoundEvent"
@@ -63,39 +64,37 @@ class TestEntity(unittest.TestCase):
             "The source entity of the yielded event should be the child entity",
         )
 
-    def test_handle_event(self):
+    async def test_handle_event(self):
         parent = Location(private=False)
         child = ExampleEntity()
         parent.children = [child]
 
         event = Event(type="SAY_ALOUD", context={})
-        parent.handle_event(parent, event)
-        # Assuming handle_event should propagate the event to children
+        await parent.handle_event(parent, event)
         self.assertTrue(
             child.should_propagate_event(bound_event=(parent, event)),
             "Event should be handled by child entity",
         )
 
-    def test_handle_event_with_cancelling_child(self):
+    async def test_handle_event_with_cancelling_child(self):
         parent = Location(private=False)
         child = ExampleCancellingEntity()
         parent.children = [child]
 
         event = Event(type="SAY_ALOUD", context={})
-        parent.handle_event(parent, event)
-        # Assuming handle_event should not propagate the event if child cancels it
+        await parent.handle_event(parent, event)
         self.assertFalse(
             child.should_propagate_event(bound_event=(parent, event)),
             "Event should not be handled by child entity",
         )
 
-    def test_add_entity(self):
+    async def test_add_entity(self):
         parent = Location(private=False)
         child = ExampleEntity()
         parent.add_entity(child)
         self.assertIn(child, parent.children, "Child entity should be added to parent")
 
-    def test_remove_entity(self):
+    async def test_remove_entity(self):
         parent = Location(private=False)
         child = ExampleEntity()
         parent.add_entity(child)
@@ -104,28 +103,28 @@ class TestEntity(unittest.TestCase):
             child, parent.children, "Child entity should be removed from parent"
         )
 
-    def test_find_by_id(self):
+    async def test_find_by_id(self):
         parent = Entity()
         child = ExampleEntity()
         parent.add_entity(child)
 
-        found_entity = parent.find_by_id(child.id)
+        found_entity = await parent.find_by_id(child.id)
         self.assertEqual(
             found_entity, child, "find_by_id should return the correct child entity"
         )
 
-    def test_emit_event(self):
+    async def test_emit_event(self):
         parent = Entity()
         event = Event(type="SAY_ALOUD", context={})
         parent.emit_event(event)
 
-        events = list(parent.pop_event_batch_iterator())
+        events = [event async for event in parent.pop_event_batch_iterator()]
         self.assertEqual(len(events), 1, "emit_event should add one event to the batch")
         self.assertEqual(
             events[0][1], event, "The emitted event should be in the batch"
         )
 
-    def test_clear_event_handler(self):
+    async def test_clear_event_handler(self):
         parent = Entity()
         event_type = Event
         handler = lambda entity, event: None
@@ -138,12 +137,12 @@ class TestEntity(unittest.TestCase):
             event_type, parent._event_handlers, "Event handler should be cleared"
         )
 
-    def test_pop_event_batch_iterator(self):
+    async def test_pop_event_batch_iterator(self):
         parent = Entity()
         event = Event(type="SAY_ALOUD", context={})
         parent.emit_event(event)
 
-        events = list(parent.pop_event_batch_iterator())
+        events = [event async for event in parent.pop_event_batch_iterator()]
         self.assertEqual(
             len(events), 1, "pop_event_batch_iterator should yield one event"
         )
@@ -152,17 +151,17 @@ class TestEntity(unittest.TestCase):
         )
 
         # Ensure the batch is cleared after popping
-        events = list(parent.pop_event_batch_iterator())
+        events = [event async for event in parent.pop_event_batch_iterator()]
         self.assertEqual(
             len(events), 0, "The event batch should be empty after popping"
         )
 
-    def test_event_handler_registration_and_calling(self):
+    async def test_event_handler_registration_and_calling(self):
         parent = Entity()
         event_type = Event
         handler_called = False
 
-        def handler(entity, event):
+        async def handler(entity, event):
             nonlocal handler_called
             handler_called = True
 
@@ -172,12 +171,12 @@ class TestEntity(unittest.TestCase):
         )
 
         event = Event(type="SAY_ALOUD", context={})
-        parent.handle_event(parent, event)
+        await parent.handle_event(parent, event)
         self.assertTrue(
             handler_called, "Event handler should be called when event is handled"
         )
 
-    def test_propagate_event_false(self):
+    async def test_propagate_event_false(self):
         class NonPropagatingEntity(Entity):
             def should_propagate_event(self, bound_event: BoundEvent) -> bool:
                 return False
@@ -191,7 +190,7 @@ class TestEntity(unittest.TestCase):
         event = Event(type="SAY_ALOUD", context={})
         child.emit_event(event)
 
-        events = list(grandparent.update())
+        events = [event async for event in grandparent.update()]
         self.assertEqual(
             len(events),
             1,

@@ -5,7 +5,7 @@ from relative_world.world import RelativeWorld
 from relative_world.location import Location
 
 
-class TestActor(unittest.TestCase):
+class TestActor(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         self.world = RelativeWorld()
@@ -13,28 +13,28 @@ class TestActor(unittest.TestCase):
         self.actor = Actor(world=self.world)
         self.world.add_location(self.location)
 
-    def test_initialization(self):
+    async def test_initialization(self):
         self.assertIsNone(self.actor.location_id)
         self.assertEqual(self.actor.world, self.world)
 
-    def test_set_world(self):
+    async def test_set_world(self):
         new_world = RelativeWorld()
         self.actor.world = new_world
         self.assertEqual(self.actor.world, new_world)
         self.assertEqual(self.actor.location_id, new_world.id)
 
-    def test_set_location(self):
+    async def test_set_location(self):
         self.actor.world = self.world
         self.actor.location = self.location
         self.assertEqual(self.actor.location_id, self.location.id)
         self.assertEqual(self.actor.location, self.location)
 
-    def test_update(self):
-        events = list(self.actor.update())
+    async def test_update(self):
+        events = [event async for event in self.actor.update()]
         self.assertEqual(events, [])
 
-    def test_act(self):
-        events = list(self.actor.act())
+    async def test_act(self):
+        events = [event async for event in self.actor.act()]
         self.assertEqual(events, [])
 
 
