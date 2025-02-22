@@ -84,14 +84,7 @@ class Reddit(Actor):
                 "I (F30) just discovered my husband (M53) is a literal serial killer, AITA for calling the police?",
             ]
         )
-        reddit_content = random.choice(
-            [
-                "I'm not sure what to do.",
-                "I'm not sure what to do.",
-                "I'm not sure what to do.",
-                "I'm not sure what to do.",
-            ]
-        )
+        reddit_content = "boop the snoot."
 
         # Yield a news event with a random headline and content
         yield from (
@@ -179,9 +172,9 @@ def main():
     world.add_actor(the_mercury, location=oregon)
     logging.debug("Added news sources to locations")
 
-    # Create a news reader
+    # Create someone to read the news
     informed_citizen = NewsReader(name="Informed Citizen")
-    world.add_actor(informed_citizen, location=new_york)
+    world.add_actor(informed_citizen, location=new_york)  # they won't see the news from Oregon because it doesn't propagate
     logging.debug("Added Informed Citizen to New York")
 
     # Run the simulation
