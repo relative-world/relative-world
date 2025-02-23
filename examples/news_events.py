@@ -161,21 +161,21 @@ async def main():
 
     # Create news sources
     unbiased_newspaper = UnbiasedNewspaper()
-    reddit = Reddit()
-    the_mercury = TheMercury()
-    logging.debug("Created news sources: Unbiased Newspaper, Reddit, The Mercury")
+    world.add_actor(unbiased_newspaper)
+    unbiased_newspaper.location = new_york
 
-    # Add news sources to locations
-    world.add_actor(unbiased_newspaper, location=new_york)
-    world.add_actor(reddit, location=san_francisco)
-    world.add_actor(the_mercury, location=oregon)
-    logging.debug("Added news sources to locations")
+    reddit = Reddit()
+    world.add_actor(reddit)
+    reddit.location = san_francisco
+
+    the_mercury = TheMercury()
+    world.add_actor(the_mercury)
+    the_mercury.location = oregon
 
     # Create someone to read the news
     informed_citizen = NewsReader(name="Informed Citizen")
-    world.add_actor(
-        informed_citizen, location=new_york
-    )  # they won't see the news from Oregon because it doesn't propagate
+    world.add_actor(informed_citizen)
+    informed_citizen.location = oregon  # they won't see the news from Oregon because it doesn't propagate
     logging.debug("Added Informed Citizen to New York")
 
     # Run the simulation
