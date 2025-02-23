@@ -2,12 +2,10 @@ import uuid
 from datetime import timedelta, datetime
 from typing import AsyncIterator, Annotated
 
-from freezegun import freeze_time
-from pydantic import Field
+from pydantic import PrivateAttr
 
-from relative_world.entity import Entity, BoundEvent
+from relative_world.entity import BoundEvent
 from relative_world.location import Location
-from relative_world.time import utcnow
 
 
 class RelativeWorld(Location):
@@ -23,11 +21,9 @@ class RelativeWorld(Location):
         previous_iterations (int): The number of previous iterations of the simulation.
         _locations_by_id (dict[uuid.UUID, Location]): A dictionary mapping location IDs to `Location` instances.
     """
-
-    simulation_start_time: Annotated[datetime, Field(default_factory=utcnow)]
-    time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
-    _locations_by_id: dict[uuid.UUID, Location] = {}
+    _locations: Annotated[dict[uuid.UUID, Location], PrivateAttr()] = {}
+    _connections: Annotated[dict[uuid.UUID, set[uuid.UUID]], PrivateAttr()] = {}
 
     async def update(self) -> AsyncIterator[BoundEvent]:
         """
@@ -36,12 +32,8 @@ class RelativeWorld(Location):
         Yields:
             AsyncIterator[BoundEvent]: An iterator of `BoundEvent` instances representing the events that occurred during the update.
         """
-        current_time = (
-            self.simulation_start_time + self.time_step * self.previous_iterations
-        )
-        with freeze_time(current_time):
-            async for event in super().update():
-                yield event
+        async for event in super().update():
+            yield event
         self.previous_iterations += 1
 
     def add_location(self, location: Location):
@@ -51,8 +43,28 @@ class RelativeWorld(Location):
         Args:
             location (Location): The location to be added to the world.
         """
-        self._locations_by_id[location.id] = location
-        super().add_entity(location)
+        self._locations[location.id] = location
+        if location.id not in self._connections:
+            self._connections[location.id] = set()
+        self.add_entity(location)
+
+    def get_location(self, location_id: uuid.UUID) -> Location:
+        """Get a location by its ID."""
+        return self._locations[location_id]
+
+    def connect_locations(self, location_a: uuid.UUID, location_b: uuid.UUID) -> None:
+        """Create a bidirectional connection between two locations."""
+        if location_a not in self._locations or location_b not in self._locations:
+            raise ValueError("Both locations must exist in the world")
+
+        self._connections[location_a].add(location_b)
+        self._connections[location_b].add(location_a)
+
+    def get_connected_locations(self, location_id: uuid.UUID) -> list[Location]:
+        """Get all locations connected to the given location."""
+        if location_id not in self._connections:
+            return []
+        return [self._locations[loc_id] for loc_id in self._connections[location_id]]
 
     def iter_locations(self) -> AsyncIterator[Location]:
         """
@@ -75,18 +87,6 @@ class RelativeWorld(Location):
         self._locations_by_id[location.id] = location
         super().add_entity(location)
 
-    def get_location_by_id(self, id: uuid.UUID) -> Location:
-        """
-        Retrieves a location by its unique identifier.
-
-        Args:
-            id (uuid.UUID): The unique identifier of the location.
-
-        Returns:
-            Location: The location associated with the given identifier, or None if not found.
-        """
-        return self._locations_by_id.get(id)
-
     def add_actor(self, actor, location=None):
         """
         Add an actor to the location.
@@ -98,10 +98,8 @@ class RelativeWorld(Location):
         """
         actor.world = self
         actor.location = location or self
-        location.add_entity(actor)
+        actor.location.add_entity(actor)
 
     async def step(self):
-        try:
-            await anext(self.update())
-        except StopAsyncIteration:
+        async for _ in self.update():
             pass

@@ -86,7 +86,7 @@ class Actor(Entity):
         if not self.location_id:
             return None
         if world := self.world:
-            return world.get_location_by_id(self.location_id)
+            return world.get_location(self.location_id)
         return None
 
     @location.setter
