@@ -1,13 +1,8 @@
 import uuid
 from datetime import timedelta, datetime
-from typing import AsyncIterator, Annotated
-
-from freezegun import freeze_time
-from pydantic import Field
-
-from relative_world.entity import Entity, BoundEvent
+from typing import AsyncIterator
+from relative_world.entity import BoundEvent
 from relative_world.location import Location
-from relative_world.time import utcnow
 
 
 class RelativeWorld(Location):
@@ -23,9 +18,6 @@ class RelativeWorld(Location):
         previous_iterations (int): The number of previous iterations of the simulation.
         _locations_by_id (dict[uuid.UUID, Location]): A dictionary mapping location IDs to `Location` instances.
     """
-
-    simulation_start_time: Annotated[datetime, Field(default_factory=utcnow)]
-    time_step: timedelta = timedelta(minutes=15)
     previous_iterations: int = 0
     _locations_by_id: dict[uuid.UUID, Location] = {}
 
@@ -36,12 +28,8 @@ class RelativeWorld(Location):
         Yields:
             AsyncIterator[BoundEvent]: An iterator of `BoundEvent` instances representing the events that occurred during the update.
         """
-        current_time = (
-            self.simulation_start_time + self.time_step * self.previous_iterations
-        )
-        with freeze_time(current_time):
-            async for event in super().update():
-                yield event
+        async for event in super().update():
+            yield event
         self.previous_iterations += 1
 
     def add_location(self, location: Location):
@@ -98,10 +86,8 @@ class RelativeWorld(Location):
         """
         actor.world = self
         actor.location = location or self
-        location.add_entity(actor)
+        actor.location.add_entity(actor)
 
     async def step(self):
-        try:
-            await anext(self.update())
-        except StopAsyncIteration:
+        async for _ in self.update():
             pass

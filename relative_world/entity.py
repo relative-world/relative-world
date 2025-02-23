@@ -141,17 +141,13 @@ class Entity(BaseModel):
             logger.debug(f"Processing child entity {producer.id}")
 
             # see if the child entity has any events to produce
-            try:
-                event_source, event = await anext(producer.update())
+            async for event_source, event in producer.update():
                 logger.debug(f"Child entity {producer.id} produced event {event}")
-            except StopAsyncIteration:
-                logger.debug(f"Child entity {producer.id} has no more events")
-                continue
 
-            if self.should_propagate_event((event_source, event)) is not False:
-                self.emit_event(event, source=event_source)
-            else:
-                await self.handle_event(event_source, event)
+                if self.should_propagate_event((event_source, event)) is not False:
+                    self.emit_event(event, source=event_source)
+                else:
+                    await self.handle_event(event_source, event)
 
         async for event in self.pop_event_batch_iterator():
             yield event
