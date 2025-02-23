@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "relative-world"
-version = "1.0.0"
+version = "2.0.0"
 description = ""
 authors = ["Tyler Evans <tyler@poorlythoughtout.com>"]
 readme = "README.md"
