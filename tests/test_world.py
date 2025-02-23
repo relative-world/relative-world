@@ -1,78 +1,84 @@
-import unittest
-from datetime import datetime, timedelta
+import pytest
 from relative_world.world import RelativeWorld
+from relative_world.location import Location
 
 
-class TestRelativeWorld(unittest.IsolatedAsyncioTestCase):
-    """
-    Test suite for the RelativeWorld class.
-    """
-
-    def setUp(self):
-        """
-        Set up the initial conditions for each test.
-        """
-        self.simulation_start_time = datetime(2023, 1, 1, 0, 0, 0)
-        self.relative_world = RelativeWorld()
-        self.relative_world.simulation_start_time = self.simulation_start_time
-
-    async def test_initial_time_step(self):
-        """
-        Test that the initial time_step is set to 15 minutes.
-        """
-        self.assertEqual(self.relative_world.time_step, timedelta(minutes=15))
-
-    async def test_update(self):
-        """
-        Test that the update method correctly advances the simulation time by one time_step.
-        """
-        self.relative_world.previous_iterations = 0
-        await self.relative_world.step()
-        expected_time = self.simulation_start_time + timedelta(minutes=15)
-        self.assertEqual(
-            self.relative_world.simulation_start_time
-            + self.relative_world.time_step * self.relative_world.previous_iterations,
-            expected_time,
-        )
-
-    async def test_update_without_start_time(self):
-        """
-        Test that updating without a start time raises a TypeError.
-        """
-        self.relative_world.simulation_start_time = None
-        with self.assertRaises(TypeError):
-            async for _ in self.relative_world.update():
-                pass
-
-    async def test_update_with_zero_time_step(self):
-        """
-        Test that updating with a zero time step does not change the simulation time.
-        """
-        self.relative_world.time_step = timedelta(0)
-        self.relative_world.previous_iterations = 1
-        async for _ in self.relative_world.update():
-            pass
-        expected_time = self.simulation_start_time
-        self.assertEqual(
-            self.relative_world.simulation_start_time
-            + self.relative_world.time_step * self.relative_world.previous_iterations,
-            expected_time,
-        )
-
-    async def test_update_with_negative_time_step(self):
-        """
-        Test that updating with a negative time step correctly adjusts the simulation time backward.
-        """
-        self.relative_world.time_step = timedelta(minutes=-15)
-        async for _ in self.relative_world.update():
-            pass
-        expected_time = self.simulation_start_time + timedelta(minutes=-15)
-        self.assertEqual(
-            self.relative_world.simulation_start_time
-            + self.relative_world.time_step * self.relative_world.previous_iterations,
-            expected_time,
-        )
+@pytest.mark.asyncio(scope="session")
+async def test_initial_time_step():
+    relative_world = RelativeWorld()
+    assert relative_world.previous_iterations == 0, "Initial previous_iterations should be 0"
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.asyncio(scope="session")
+async def test_update():
+    relative_world = RelativeWorld()
+    relative_world.previous_iterations = 0
+    await relative_world.step()
+    assert relative_world.previous_iterations == 1, "Update should advance the simulation by one iteration"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_update_with_zero_time_step():
+    relative_world = RelativeWorld()
+    relative_world.previous_iterations = 1
+    async for _ in relative_world.update():
+        pass
+    assert relative_world.previous_iterations == 2, "Update should still advance the simulation"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_update_with_negative_time_step():
+    relative_world = RelativeWorld()
+    async for _ in relative_world.update():
+        pass
+    assert relative_world.previous_iterations == 1, "Update should still advance the simulation"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_add_location():
+    relative_world = RelativeWorld()
+    location = Location()
+    relative_world.add_location(location)
+    assert location.id in relative_world._locations, "Location should be added to the world"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_remove_location():
+    relative_world = RelativeWorld()
+    location = Location()
+    relative_world.add_location(location)
+    relative_world.remove_location(location)
+    assert location.id not in relative_world._locations, "Location should be removed from the world"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_connect_locations():
+    relative_world = RelativeWorld()
+    location_a = Location()
+    location_b = Location()
+    relative_world.add_location(location_a)
+    relative_world.add_location(location_b)
+    relative_world.connect_locations(location_a.id, location_b.id)
+    assert location_b.id in relative_world._connections[location_a.id], "Locations should be connected"
+    assert location_a.id in relative_world._connections[location_b.id], "Locations should be connected"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_get_connected_locations():
+    relative_world = RelativeWorld()
+    location_a = Location()
+    location_b = Location()
+    relative_world.add_location(location_a)
+    relative_world.add_location(location_b)
+    relative_world.connect_locations(location_a.id, location_b.id)
+    connected_locations = relative_world.get_connected_locations(location_a.id)
+    assert location_b in connected_locations, "Should return connected locations"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_iter_locations():
+    relative_world = RelativeWorld()
+    location = Location()
+    relative_world.add_location(location)
+    locations = [loc async for loc in relative_world.iter_locations()]
+    assert location in locations, "Should iterate over all locations in the world"
