@@ -1,6 +1,9 @@
 import uuid
 from datetime import timedelta, datetime
-from typing import AsyncIterator
+from typing import AsyncIterator, Annotated
+
+from pydantic import PrivateAttr
+
 from relative_world.entity import BoundEvent
 from relative_world.location import Location
 
@@ -19,7 +22,8 @@ class RelativeWorld(Location):
         _locations_by_id (dict[uuid.UUID, Location]): A dictionary mapping location IDs to `Location` instances.
     """
     previous_iterations: int = 0
-    _locations_by_id: dict[uuid.UUID, Location] = {}
+    _locations: Annotated[dict[uuid.UUID, Location], PrivateAttr()] = {}
+    _connections: Annotated[dict[uuid.UUID, set[uuid.UUID]], PrivateAttr()] = {}
 
     async def update(self) -> AsyncIterator[BoundEvent]:
         """
@@ -39,8 +43,28 @@ class RelativeWorld(Location):
         Args:
             location (Location): The location to be added to the world.
         """
-        self._locations_by_id[location.id] = location
-        super().add_entity(location)
+        self._locations[location.id] = location
+        if location.id not in self._connections:
+            self._connections[location.id] = set()
+        self.add_entity(location)
+
+    def get_location(self, location_id: uuid.UUID) -> Location:
+        """Get a location by its ID."""
+        return self._locations[location_id]
+
+    def connect_locations(self, location_a: uuid.UUID, location_b: uuid.UUID) -> None:
+        """Create a bidirectional connection between two locations."""
+        if location_a not in self._locations or location_b not in self._locations:
+            raise ValueError("Both locations must exist in the world")
+
+        self._connections[location_a].add(location_b)
+        self._connections[location_b].add(location_a)
+
+    def get_connected_locations(self, location_id: uuid.UUID) -> list[Location]:
+        """Get all locations connected to the given location."""
+        if location_id not in self._connections:
+            return []
+        return [self._locations[loc_id] for loc_id in self._connections[location_id]]
 
     def iter_locations(self) -> AsyncIterator[Location]:
         """
@@ -62,18 +86,6 @@ class RelativeWorld(Location):
         """
         self._locations_by_id[location.id] = location
         super().add_entity(location)
-
-    def get_location_by_id(self, id: uuid.UUID) -> Location:
-        """
-        Retrieves a location by its unique identifier.
-
-        Args:
-            id (uuid.UUID): The unique identifier of the location.
-
-        Returns:
-            Location: The location associated with the given identifier, or None if not found.
-        """
-        return self._locations_by_id.get(id)
 
     def add_actor(self, actor, location=None):
         """
