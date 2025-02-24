@@ -80,5 +80,5 @@ async def test_iter_locations():
     relative_world = RelativeWorld()
     location = Location()
     relative_world.add_location(location)
-    locations = [loc async for loc in relative_world.iter_locations()]
+    locations = [loc async for loc in relative_world.aiter_locations()]
     assert location in locations, "Should iterate over all locations in the world"

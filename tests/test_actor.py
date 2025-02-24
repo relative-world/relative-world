@@ -97,7 +97,7 @@ async def test_find_by_id():
     actor.location = location
 
     found_entity = await actor.find_by_id(actor.id)
-    assert found_entity == actor, "find_by_id should return the correct actor entity"
+    assert found_entity is actor, "find_by_id should return the correct actor entity"
 
 
 @pytest.mark.asyncio(scope="session")
