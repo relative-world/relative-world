@@ -1,5 +1,5 @@
 import uuid
-from typing import AsyncIterator, Annotated
+from typing import AsyncIterator, Annotated, Iterator
 
 from pydantic import PrivateAttr
 
@@ -43,7 +43,12 @@ class RelativeWorld(Location):
             return []
         return [self._locations[loc_id] for loc_id in self._connections[location_id]]
 
-    async def iter_locations(self) -> AsyncIterator[Location]:
+    def iter_locations(self) -> Iterator[Location]:
+        for location in self.children:
+            if isinstance(location, Location):
+                yield location
+
+    async def aiter_locations(self) -> AsyncIterator[Location]:
         for location in self.children:
             if isinstance(location, Location):
                 yield location

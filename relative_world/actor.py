@@ -102,6 +102,7 @@ class Actor(Entity):
         if self.location:
             self.location.remove_entity(self)
         self.location_id = value.id
+        value.add_entity(self)
 
     async def update(self) -> AsyncIterator[BoundEvent]:
         """
