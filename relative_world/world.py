@@ -29,6 +29,8 @@ class RelativeWorld(Location):
         self.remove_entity(location)
 
     def get_location(self, location_id: uuid.UUID) -> Location:
+        if location_id is self.id:
+            return self
         return self._locations[location_id]
 
     def connect_locations(self, location_a: uuid.UUID, location_b: uuid.UUID) -> None:
