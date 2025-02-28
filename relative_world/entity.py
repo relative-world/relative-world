@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from typing import AsyncIterator, Annotated, Type, Callable
@@ -126,28 +127,19 @@ class Entity(BaseModel):
         return None
 
     async def update(self) -> AsyncIterator[BoundEvent]:
-        """
-        Updates the state of the entity and its children.
-
-        Applies child events to each child entity as they occur.
-
-        Yields:
-            AsyncIterator[BoundEvent]: An iterator of tuples containing the entity and the event.
-        """
         logger.debug(f"Updating entity {self.id}")
         event_producers = self.children[::]
-        while event_producers:
-            producer = event_producers.pop(0)  # grab the next child entity in the list
-            logger.debug(f"Processing child entity {producer.id}")
 
-            # see if the child entity has any events to produce
+        async def process_producer(producer):
+            logger.debug(f"Processing child entity {producer.id}")
             async for event_source, event in producer.update():
                 logger.debug(f"Child entity {producer.id} produced event {event}")
-
                 if self.should_propagate_event((event_source, event)) is not False:
                     self.emit_event(event, source=event_source)
                 else:
                     await self.handle_event(event_source, event)
+
+        await asyncio.gather(*(process_producer(producer) for producer in event_producers))
 
         async for event in self.pop_event_batch_iterator():
             yield event

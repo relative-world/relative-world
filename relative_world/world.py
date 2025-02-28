@@ -12,11 +12,6 @@ class RelativeWorld(Location):
     _locations: Annotated[dict[uuid.UUID, Location], PrivateAttr()] = {}
     _connections: Annotated[dict[uuid.UUID, set[uuid.UUID]], PrivateAttr()] = {}
 
-    async def update(self) -> AsyncIterator[BoundEvent]:
-        async for event in super().update():
-            yield event
-        self.previous_iterations += 1
-
     def add_location(self, location: Location):
         self._locations[location.id] = location
         if location.id not in self._connections:
